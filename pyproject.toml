@@ -1,0 +1,8 @@
+[project]
+name = "nonebot-plugin-apex-api-qurty"
+version = "1.0.0"
+dependencies = ["requests", "nonebot2"]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
