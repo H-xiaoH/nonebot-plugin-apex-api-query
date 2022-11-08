@@ -2,10 +2,9 @@ from time import strftime, gmtime
 from nonebot import on_command
 from nonebot.adapters import Message
 from nonebot.params import CommandArg
-from nonebot.plugin.plugin import PluginMetadata
-import requests
+from httpx import AsyncClient
 
-PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息 \n /maprotation 查询地图轮换 \n /predator 查询 PC 端顶尖猎杀者 \n /crafting 查询制造轮换')
+__plugin_meta__=('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息 \n /maprotation 查询地图轮换 \n /predator 查询 PC 端顶尖猎杀者 \n /crafting 查询制造轮换')
 
 api_key = ''
 api_url = 'https://api.mozambiquehe.re/'
@@ -21,7 +20,7 @@ async def _(player_name: Message = CommandArg()):
         service = 'bridge'
         payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
         await player_statistics.send('正在查询: 玩家 %s' % player_name)
-        response = api_query(service, payload)
+        response = await api_query(service, payload)
         if response:
             if 'Error' in response.json():
                 await player_statistics.send('查询失败')
@@ -57,7 +56,7 @@ async def _():
     service = 'maprotation'
     payload = {'auth': api_key}
     await map_protation.send('正在查询: 地图轮换')
-    response = api_query(service, payload)
+    response = await api_query(service, payload)
     if response:
         data = ''
         data += '大逃杀: \n'
@@ -73,7 +72,7 @@ async def _():
     service = 'predator'
     payload = {'auth': api_key}
     await predator.send('正在查询: 顶尖猎杀者')
-    response = api_query(service, payload)
+    response = await api_query(service, payload)
     if response:
         json_rp = response.json().setdefault('RP').setdefault('PC')
         json_ap = response.json().setdefault('AP').setdefault('PC')
@@ -95,7 +94,7 @@ async def _():
     service = 'crafting'
     payload = {'auth': api_key}
     await crafting_rotation.send('正在查询: 制造轮换')
-    response = api_query(service, payload)
+    response = await api_query(service, payload)
     if response:
         data = ''
         data += '每日制造: \n'
@@ -108,16 +107,16 @@ async def _():
     else:
         await crafting_rotation.send('查询失败')
 
-def api_query(service, payload):
+async def api_query(service, payload):
     try:
-        response = requests.get(api_url + service, params=payload)
-    except:
-        return 
-    else:
+        async with AsyncClient() as client:
+            response = await client.get(api_url+service,params=payload)
         if response.status_code == 200:
             return response
         else:
             return
+    except:
+        return
 
 def convert(name):
     names = {
