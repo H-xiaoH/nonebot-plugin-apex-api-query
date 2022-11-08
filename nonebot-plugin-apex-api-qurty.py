@@ -3,8 +3,9 @@ from nonebot import on_command
 from nonebot.adapters import Message
 from nonebot.params import CommandArg
 from httpx import AsyncClient
+from nonebot.plugin import PluginMetadata
 
-__plugin_meta__=('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息 \n /maprotation 查询地图轮换 \n /predator 查询 PC 端顶尖猎杀者 \n /crafting 查询制造轮换')
+__plugin_meta__ = PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息 \n /maprotation 查询地图轮换 \n /predator 查询 PC 端顶尖猎杀者 \n /crafting 查询制造轮换')
 
 api_key = ''
 api_url = 'https://api.mozambiquehe.re/'
