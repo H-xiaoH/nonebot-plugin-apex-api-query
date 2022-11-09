@@ -4,5 +4,5 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nonebot-plugin-apex-api-query"
-version = "22.11.8"
+version = "22.11.9"
 dependencies = ["nonebot2"]
