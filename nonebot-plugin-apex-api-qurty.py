@@ -1,56 +1,54 @@
 from time import strftime, gmtime
 from nonebot import on_command
-from nonebot.adapters import Message
+from nonebot.adapters import Bot, Message
+from nonebot.log import logger
 from nonebot.params import CommandArg
-from httpx import AsyncClient
 from nonebot.plugin import PluginMetadata
+from httpx import AsyncClient
 
 __plugin_meta__ = PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息 \n /maprotation 查询地图轮换 \n /predator 查询 PC 端顶尖猎杀者 \n /crafting 查询制造轮换')
 
 api_key = ''
 api_url = 'https://api.mozambiquehe.re/'
 
-player_statistics = on_command('bridge')
-map_protation = on_command('maprotation')
-predator = on_command('predator')
-crafting_rotation = on_command('crafting')
+player_statistics = on_command('bridge', aliases= {'玩家'})
+map_protation = on_command('maprotation', aliases={'地图'})
+predator = on_command('predator', aliases={'猎杀'})
+crafting_rotation = on_command('crafting', aliases={'制造'})
 
 @player_statistics.handle()
 async def _(player_name: Message = CommandArg()):
-    if player_name:
-        service = 'bridge'
-        payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
-        await player_statistics.send('正在查询: 玩家 %s' % player_name)
-        response = await api_query(service, payload)
-        if response:
-            if 'Error' in response.json():
-                await player_statistics.send('查询失败')
-            else:
-                json_global = response.json().setdefault('global')
-                json_realtime = response.json().setdefault('realtime')
-                data = ''
-                data += '玩家信息: \n'
-                data += '名称: %s \n' % str(json_global.setdefault('name'))
-                data += 'UID: %s \n' % str(json_global.setdefault('uid'))
-                data += '平台: %s \n' % str(json_global.setdefault('platform'))
-                data += '等级: %s \n' % str(json_global.setdefault('level'))
-                data += '大逃杀段位: %s \n' % str(convert(json_global.setdefault('rank').setdefault('rankName')))
-                data += '大逃杀分数: %s \n' % str(json_global.setdefault('rank').setdefault('rankScore'))
-                data += '竞技场段位: %s \n' % str(convert(json_global.setdefault('arena').setdefault('rankName')))
-                data += '竞技场分数: %s \n' % str(json_global.setdefault('arena').setdefault('rankScore'))
-                data += '大厅状态: %s \n' % str(convert(json_realtime.setdefault('lobbyState')))
-                data += '在线: %s \n' % str(convert(json_realtime.setdefault('isOnline')))
-                data += '游戏中: %s \n' % str(convert(json_realtime.setdefault('isInGame')))
-                data += '可加入: %s \n' % str(convert(json_realtime.setdefault('canJoin')))
-                data += '群满员: %s \n' % str(convert(json_realtime.setdefault('partyFull')))
-                data += '已选传奇: %s \n' % str(convert(json_realtime.setdefault('selectedLegend')))
-                data += '当前状态: %s \n' % str(convert(json_realtime.setdefault('currentState')))
-                data += '当前状态时长: %s \n' % str(strftime('%H:%M:%S', gmtime(json_realtime.setdefault('currentStateSecsAgo'))))
-                await player_statistics.send(data)
+    service = 'bridge'
+    payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
+    await player_statistics.send('正在查询: 玩家 %s' % player_name)
+    response = await api_query(service, payload)
+    if response:
+        if 'Error' in response.json():
+            await player_statistics.send('查询失败: %s' % response.json().get('Error'))
         else:
-            await player_statistics.send('查询失败')        
+            globals = response.json().get('global')
+            realtime = response.json().get('realtime')
+            data = ''
+            data += '玩家信息: \n'
+            data += '名称: %s \n' % str(globals.get('name'))
+            data += 'UID: %s \n' % str(globals.get('uid'))
+            data += '平台: %s \n' % str(globals.get('platform'))
+            data += '等级: %s \n' % str(globals.get('level'))
+            data += '大逃杀段位: %s \n' % str(convert(globals.get('rank').get('rankName')))
+            data += '大逃杀分数: %s \n' % str(globals.get('rank').get('rankScore'))
+            data += '竞技场段位: %s \n' % str(convert(globals.get('arena').get('rankName')))
+            data += '竞技场分数: %s \n' % str(globals.get('arena').get('rankScore'))
+            data += '大厅状态: %s \n' % str(convert(realtime.get('lobbyState')))
+            data += '在线: %s \n' % str(convert(realtime.get('isOnline')))
+            data += '游戏中: %s \n' % str(convert(realtime.get('isInGame')))
+            data += '可加入: %s \n' % str(convert(realtime.get('canJoin')))
+            data += '群满员: %s \n' % str(convert(realtime.get('partyFull')))
+            data += '已选传奇: %s \n' % str(convert(realtime.get('selectedLegend')))
+            data += '当前状态: %s \n' % str(convert(realtime.get('currentState')))
+            data += '当前状态时长: %s \n' % str(strftime('%H:%M:%S', gmtime(realtime.get('currentStateSecsAgo'))))
+            await player_statistics.send(data)
     else:
-        await player_statistics.send('查询失败')
+        await player_statistics.send('查询失败')        
 
 @map_protation.handle()
 async def _():
@@ -61,9 +59,9 @@ async def _():
     if response:
         data = ''
         data += '大逃杀: \n'
-        data += '当前地图: %s \n' % str(convert(response.json().setdefault('current').setdefault('map')))
-        data += '下个地图: %s \n' % str(convert(response.json().setdefault('next').setdefault('map')))
-        data += '剩余时间: %s \n' % str(convert(response.json().setdefault('current').setdefault('remainingTimer')))
+        data += '当前地图: %s \n' % str(convert(response.json().get('current').get('map')))
+        data += '下个地图: %s \n' % str(convert(response.json().get('next').get('map')))
+        data += '剩余时间: %s \n' % str(convert(response.json().get('current').get('remainingTimer')))
         await map_protation.send(data)
     else:
         await map_protation.send('查询失败')
@@ -75,17 +73,17 @@ async def _():
     await predator.send('正在查询: 顶尖猎杀者')
     response = await api_query(service, payload)
     if response:
-        json_rp = response.json().setdefault('RP').setdefault('PC')
-        json_ap = response.json().setdefault('AP').setdefault('PC')
+        rp = response.json().get('RP').get('PC')
+        ap = response.json().get('AP').get('PC')
         data = ''
         data += 'PC 大逃杀: \n'
-        data += '猎杀者人数: %s \n' % str(json_rp.setdefault('foundRank'))
-        data += '猎杀者分数: %s \n' % str(json_rp.setdefault('val'))
-        data += '大师和猎杀者人数: %s \n' % str(json_rp.setdefault('totalMastersAndPreds'))
+        data += '猎杀者人数: %s \n' % str(rp.get('foundRank'))
+        data += '猎杀者分数: %s \n' % str(rp.get('val'))
+        data += '大师和猎杀者人数: %s \n' % str(rp.get('totalMastersAndPreds'))
         data += 'PC 竞技场: \n'
-        data += '猎杀者人数: %s \n' % str(json_ap.setdefault('foundRank'))
-        data += '猎杀者分数: %s \n' % str(json_ap.setdefault('val'))
-        data += '大师和猎杀者人数: %s \n' % str(json_ap.setdefault('totalMastersAndPreds'))
+        data += '猎杀者人数: %s \n' % str(ap.get('foundRank'))
+        data += '猎杀者分数: %s \n' % str(ap.get('val'))
+        data += '大师和猎杀者人数: %s \n' % str(ap.get('totalMastersAndPreds'))
         await predator.send(data)
     else:
         await predator.send('查询失败')
@@ -111,7 +109,7 @@ async def _():
 async def api_query(service, payload):
     try:
         async with AsyncClient() as client:
-            response = await client.get(api_url+service,params=payload)
+            response = await client.get(api_url + service, params = payload)
         if response.status_code == 200:
             return response
         else:
