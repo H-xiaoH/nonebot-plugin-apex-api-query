@@ -1,8 +1,21 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "nonebot-plugin-apex-api-query"
-version = "22.11.10"
-dependencies = ["nonebot2"]
+version = "22.11.15"
+description = "基于 NoneBot2 的 Apex Legends API 查询插件"
+license = "MIT"
+authors = ["HxiaoH <412454922@qq.com>"]
+readme = "README.md"
+homepage = "https://github.com/H-xiaoH/nonebot-plugin-apex-api-query"
+repository = "https://github.com/H-xiaoH/nonebot-plugin-apex-api-query"
+documentation = "https://github.com/H-xiaoH/nonebot-plugin-apex-api-query/blob/main/README.md"
+packages = [{include = "nonebot_plugin_apex_api_query"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+httpx = "^0.23.0"
+nonebot2 = "^2.0.0rc1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
