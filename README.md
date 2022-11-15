@@ -1,14 +1,25 @@
-# Apex API Query
-Apex Legends API 查询插件
+<div align="center">
+
+[![nonebot](https://v2.nonebot.dev/logo.png)](https://v2.nonebot.dev/)
+
+# nonebot-plugin-apex-api-query
+
+*✨ NoneBot Apex Legends API 查询插件 ✨*
+
+![GitHub](https://img.shields.io/github/license/H-xiaoH/nonebot-plugin-apex-api-query)
+![PyPI](https://img.shields.io/pypi/v/nonebot-plugin-apex-api-query)
+
+</div>
 
 ## 使用方法
-在 `nonebot-plugin-apex-api-query.py` 中的第 10 行填入您的 API 密钥。
+在 `__init__.py` 中第十行 `api_key = '' ` 里填入您的 API 密钥。
+
 您可以点击 [此处](https://portal.apexlegendsapi.com/) 申请 API 密钥。
-在 Bot 私聊 或 已加入的群聊 中发送命令。
+
+在与 Bot 私聊 或 已加入的群聊 中发送命令。
 
 ### 查询玩家信息
-`/bridge [玩家名称]` 、 `/玩家 [玩家名称]`
-暂不支持 UID 查询。
+`/bridge [玩家名称]` 、 `/玩家 [玩家名称]` 暂不支持除 PC 外的平台查询。
 
 输出示例：
 ```text
@@ -16,12 +27,12 @@ Apex Legends API 查询插件
 名称: HxiaoH 
 UID: 1002727553409 
 平台: PC 
-等级: 215 
+等级: 220 
 封禁状态: 否 
 剩余秒数: 0 
-最后封禁原因: 竞技逃跑冷却
-大逃杀段位: 黄金 4 
-大逃杀分数: 5828 
+最后封禁原因: 竞技逃跑冷却 
+大逃杀段位: 黄金 1 
+大逃杀分数: 7691 
 竞技场段位: 白银 3 
 竞技场分数: 2317 
 大厅状态: 打开 
@@ -31,7 +42,6 @@ UID: 1002727553409
 群满员: 否 
 已选传奇: 地平线 
 当前状态: 离线 
-当前状态时长: 15:08:37 
 ```
 
 ### 查询大逃杀地图轮换
@@ -40,9 +50,21 @@ UID: 1002727553409
 输出示例：
 ```text
 大逃杀: 
-当前地图: 奥林匹斯 
-下个地图: 世界尽头 
-剩余时间: 00:06:27 
+当前地图: 破碎月亮 
+下个地图: 奥林匹斯 
+剩余时间: 00:30:20 
+竞技场: 
+当前地图: 栖息地 4 
+下个地图: 再来一次 
+剩余时间: 00:00:20 
+排位赛联盟: 
+当前地图: 破碎月亮 
+下个地图: 奥林匹斯 
+剩余时间: 1513:00:20 
+排位竞技场: 
+当前地图: 栖息地 4 
+下个地图: 再来一次 
+剩余时间: 00:00:20 
 ```
 
 ### 查询猎杀者信息
