@@ -1,11 +1,11 @@
 from nonebot import on_command
-from nonebot.adapters import Bot, Message
+from nonebot.adapters import Message
 from nonebot.log import logger
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from httpx import AsyncClient
 
-__plugin_meta__ = PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息 \n /maprotation 查询地图轮换 \n /predator 查询 PC 端顶尖猎杀者 \n /crafting 查询制造轮换')
+__plugin_meta__ = PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息\n/maprotation 查询地图轮换\n/predator 查询 PC 端顶尖猎杀者\n/crafting 查询制造轮换')
 
 api_key = ''
 api_url = 'https://api.mozambiquehe.re/'
@@ -17,8 +17,11 @@ crafting_rotation = on_command('crafting', aliases={'制造'})
 
 @player_statistics.handle()
 async def _(player_name: Message = CommandArg()):
+    if type(player_name) == int:
+        payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
+    else:
+        payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     service = 'bridge'
-    payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     await player_statistics.send('正在查询: 玩家 %s' % player_name)
     response = await api_query(service, payload)
     if response:
@@ -28,25 +31,25 @@ async def _(player_name: Message = CommandArg()):
             globals = response.json().get('global')
             realtime = response.json().get('realtime')
             data = ''
-            data += '玩家信息: \n'
-            data += '名称: %s \n' % str(globals.get('name'))
-            data += 'UID: %s \n' % str(globals.get('uid'))
-            data += '平台: %s \n' % str(globals.get('platform'))
-            data += '等级: %s \n' % str(globals.get('level'))
-            data += '封禁状态: %s \n' % str(convert(globals.get('bans').get('isActive')))
-            data += '剩余秒数: %s \n' % str(globals.get('bans').get('remainingSeconds'))
-            data += '最后封禁原因: %s \n' % str(convert(globals.get('bans').get('last_banReason')))
-            data += '大逃杀段位: %s %s \n' % (str(convert(globals.get('rank').get('rankName'))), str(globals.get('rank').get('rankDiv')))
-            data += '大逃杀分数: %s \n' % str(globals.get('rank').get('rankScore'))
-            data += '竞技场段位: %s %s \n' % (str(convert(globals.get('arena').get('rankName'))), str(globals.get('arena').get('rankDiv')))
-            data += '竞技场分数: %s \n' % str(globals.get('arena').get('rankScore'))
-            data += '大厅状态: %s \n' % str(convert(realtime.get('lobbyState')))
-            data += '在线: %s \n' % str(convert(realtime.get('isOnline')))
-            data += '游戏中: %s \n' % str(convert(realtime.get('isInGame')))
-            data += '可加入: %s \n' % str(convert(realtime.get('canJoin')))
-            data += '群满员: %s \n' % str(convert(realtime.get('partyFull')))
-            data += '已选传奇: %s \n' % str(convert(realtime.get('selectedLegend')))
-            data += '当前状态: %s \n' % str(convert(realtime.get('currentState')))
+            data += '玩家信息:\n'
+            data += '名称: %s\n' % str(globals.get('name'))
+            data += 'UID: %s\n' % str(globals.get('uid'))
+            data += '平台: %s\n' % str(globals.get('platform'))
+            data += '等级: %s\n' % str(globals.get('level'))
+            data += '封禁状态: %s\n' % str(convert(globals.get('bans').get('isActive')))
+            data += '剩余秒数: %s\n' % str(globals.get('bans').get('remainingSeconds'))
+            data += '最后封禁原因: %s\n' % str(convert(globals.get('bans').get('last_banReason')))
+            data += '大逃杀段位: %s %s\n' % (str(convert(globals.get('rank').get('rankName'))), str(globals.get('rank').get('rankDiv')))
+            data += '大逃杀分数: %s\n' % str(globals.get('rank').get('rankScore'))
+            data += '竞技场段位: %s %s\n' % (str(convert(globals.get('arena').get('rankName'))), str(globals.get('arena').get('rankDiv')))
+            data += '竞技场分数: %s\n' % str(globals.get('arena').get('rankScore'))
+            data += '大厅状态: %s\n' % str(convert(realtime.get('lobbyState')))
+            data += '在线: %s\n' % str(convert(realtime.get('isOnline')))
+            data += '游戏中: %s\n' % str(convert(realtime.get('isInGame')))
+            data += '可加入: %s\n' % str(convert(realtime.get('canJoin')))
+            data += '群满员: %s\n' % str(convert(realtime.get('partyFull')))
+            data += '已选传奇: %s\n' % str(convert(realtime.get('selectedLegend')))
+            data += '当前状态: %s' % str(convert(realtime.get('currentState')))
             await player_statistics.send(data)
     else:
         await player_statistics.send('查询失败')        
@@ -63,22 +66,22 @@ async def _():
         ranked = response.json().get('ranked')
         arenasRanked = response.json().get('arenasRanked')
         data = ''
-        data += '大逃杀: \n'
-        data += '当前地图: %s \n' % str(convert(battle_royale.get('current').get('map')))
-        data += '下个地图: %s \n' % str(convert(battle_royale.get('next').get('map')))
-        data += '剩余时间: %s \n' % str(convert(battle_royale.get('current').get('remainingTimer')))
-        data += '竞技场: \n'
-        data += '当前地图: %s \n' % str(convert(arenas.get('current').get('map')))
-        data += '下个地图: %s \n' % str(convert(arenas.get('next').get('map')))
-        data += '剩余时间: %s \n' % str(convert(arenas.get('current').get('remainingTimer')))
-        data += '排位赛联盟: \n'
-        data += '当前地图: %s \n' % str(convert(ranked.get('current').get('map')))
-        data += '下个地图: %s \n' % str(convert(ranked.get('next').get('map')))
-        data += '剩余时间: %s \n' % str(convert(ranked.get('current').get('remainingTimer')))
-        data += '排位竞技场: \n'
-        data += '当前地图: %s \n' % str(convert(arenasRanked.get('current').get('map')))
-        data += '下个地图: %s \n' % str(convert(arenasRanked.get('next').get('map')))
-        data += '剩余时间: %s \n' % str(convert(arenasRanked.get('current').get('remainingTimer')))
+        data += '大逃杀:\n'
+        data += '当前地图: %s\n' % str(convert(battle_royale.get('current').get('map')))
+        data += '下个地图: %s\n' % str(convert(battle_royale.get('next').get('map')))
+        data += '剩余时间: %s\n' % str(convert(battle_royale.get('current').get('remainingTimer')))
+        data += '竞技场:\n'
+        data += '当前地图: %s\n' % str(convert(arenas.get('current').get('map')))
+        data += '下个地图: %s\n' % str(convert(arenas.get('next').get('map')))
+        data += '剩余时间: %s\n' % str(convert(arenas.get('current').get('remainingTimer')))
+        data += '排位赛联盟:\n'
+        data += '当前地图: %s\n' % str(convert(ranked.get('current').get('map')))
+        data += '下个地图: %s\n' % str(convert(ranked.get('next').get('map')))
+        data += '剩余时间: %s\n' % str(convert(ranked.get('current').get('remainingTimer')))
+        data += '排位竞技场:\n'
+        data += '当前地图: %s\n' % str(convert(arenasRanked.get('current').get('map')))
+        data += '下个地图: %s\n' % str(convert(arenasRanked.get('next').get('map')))
+        data += '剩余时间: %s' % str(convert(arenasRanked.get('current').get('remainingTimer')))
         await map_protation.send(data)
     else:
         await map_protation.send('查询失败')
@@ -93,40 +96,40 @@ async def _():
         rp = response.json().get('RP')
         ap = response.json().get('AP')
         data = ''
-        data += '大逃杀: \n'
-        data += 'PC 端: \n'
-        data += '猎杀者人数: %s \n' % str(rp.get('PC').get('foundRank'))
-        data += '猎杀者分数: %s \n' % str(rp.get('PC').get('val'))
-        data += '大师和猎杀者人数: %s \n' % str(rp.get('PC').get('totalMastersAndPreds'))
-        data += 'PS4/5 端: \n'
-        data += '猎杀者人数: %s \n' % str(rp.get('PS4').get('foundRank'))
-        data += '猎杀者分数: %s \n' % str(rp.get('PS4').get('val'))
-        data += '大师和猎杀者人数: %s \n' % str(rp.get('PS4').get('totalMastersAndPreds'))
-        data += 'Xbox 端: \n'
-        data += '猎杀者人数: %s \n' % str(rp.get('X1').get('foundRank'))
-        data += '猎杀者分数: %s \n' % str(rp.get('X1').get('val'))
-        data += '大师和猎杀者人数: %s \n' % str(rp.get('X1').get('totalMastersAndPreds'))
-        data += 'Switch 端: \n'
-        data += '猎杀者人数: %s \n' % str(rp.get('SWITCH').get('foundRank'))
-        data += '猎杀者分数: %s \n' % str(rp.get('SWITCH').get('val'))
-        data += '大师和猎杀者人数: %s \n' % str(rp.get('SWITCH').get('totalMastersAndPreds'))
-        data += '竞技场: \n'
-        data += 'PC 端: \n'
-        data += '猎杀者人数: %s \n' % str(ap.get('PC').get('foundRank'))
-        data += '猎杀者分数: %s \n' % str(ap.get('PC').get('val'))
-        data += '大师和猎杀者人数: %s \n' % str(ap.get('PC').get('totalMastersAndPreds'))
-        data += 'PS4/5 端: \n'
-        data += '猎杀者人数: %s \n' % str(ap.get('PS4').get('foundRank'))
-        data += '猎杀者分数: %s \n' % str(ap.get('PS4').get('val'))
-        data += '大师和猎杀者人数: %s \n' % str(ap.get('PS4').get('totalMastersAndPreds'))
-        data += 'Xbox 端: \n'
-        data += '猎杀者人数: %s \n' % str(ap.get('X1').get('foundRank'))
-        data += '猎杀者分数: %s \n' % str(ap.get('X1').get('val'))
-        data += '大师和猎杀者人数: %s \n' % str(ap.get('X1').get('totalMastersAndPreds'))
-        data += 'Switch 端: \n'
-        data += '猎杀者人数: %s \n' % str(ap.get('SWITCH').get('foundRank'))
-        data += '猎杀者分数: %s \n' % str(ap.get('SWITCH').get('val'))
-        data += '大师和猎杀者人数: %s \n' % str(ap.get('SWITCH').get('totalMastersAndPreds'))
+        data += '大逃杀:\n'
+        data += 'PC 端:\n'
+        data += '猎杀者人数: %s\n' % str(rp.get('PC').get('foundRank'))
+        data += '猎杀者分数: %s\n' % str(rp.get('PC').get('val'))
+        data += '大师和猎杀者人数: %s\n' % str(rp.get('PC').get('totalMastersAndPreds'))
+        data += 'PS4/5 端:\n'
+        data += '猎杀者人数: %s\n' % str(rp.get('PS4').get('foundRank'))
+        data += '猎杀者分数: %s\n' % str(rp.get('PS4').get('val'))
+        data += '大师和猎杀者人数: %s\n' % str(rp.get('PS4').get('totalMastersAndPreds'))
+        data += 'Xbox 端:\n'
+        data += '猎杀者人数: %s\n' % str(rp.get('X1').get('foundRank'))
+        data += '猎杀者分数: %s\n' % str(rp.get('X1').get('val'))
+        data += '大师和猎杀者人数: %s\n' % str(rp.get('X1').get('totalMastersAndPreds'))
+        data += 'Switch 端:\n'
+        data += '猎杀者人数: %s\n' % str(rp.get('SWITCH').get('foundRank'))
+        data += '猎杀者分数: %s\n' % str(rp.get('SWITCH').get('val'))
+        data += '大师和猎杀者人数: %s\n' % str(rp.get('SWITCH').get('totalMastersAndPreds'))
+        data += '竞技场:\n'
+        data += 'PC 端:\n'
+        data += '猎杀者人数: %s\n' % str(ap.get('PC').get('foundRank'))
+        data += '猎杀者分数: %s\n' % str(ap.get('PC').get('val'))
+        data += '大师和猎杀者人数: %s\n' % str(ap.get('PC').get('totalMastersAndPreds'))
+        data += 'PS4/5 端:\n'
+        data += '猎杀者人数: %s\n' % str(ap.get('PS4').get('foundRank'))
+        data += '猎杀者分数: %s\n' % str(ap.get('PS4').get('val'))
+        data += '大师和猎杀者人数: %s\n' % str(ap.get('PS4').get('totalMastersAndPreds'))
+        data += 'Xbox 端:\n'
+        data += '猎杀者人数: %s\n' % str(ap.get('X1').get('foundRank'))
+        data += '猎杀者分数: %s\n' % str(ap.get('X1').get('val'))
+        data += '大师和猎杀者人数: %s\n' % str(ap.get('X1').get('totalMastersAndPreds'))
+        data += 'Switch 端:\n'
+        data += '猎杀者人数: %s\n' % str(ap.get('SWITCH').get('foundRank'))
+        data += '猎杀者分数: %s\n' % str(ap.get('SWITCH').get('val'))
+        data += '大师和猎杀者人数: %s' % str(ap.get('SWITCH').get('totalMastersAndPreds'))
         await predator.send(data)
     else:
         await predator.send('查询失败')
@@ -139,15 +142,15 @@ async def _():
     response = await api_query(service, payload)
     if response:
         data = ''
-        data += '每日制造: \n'
-        data += '%s %s %s 点 \n' % (str(convert(response.json()[0]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[0]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[0]['bundleContent'][0]['cost'])))
+        data += '每日制造:\n'
+        data += '%s %s %s 点\n' % (str(convert(response.json()[0]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[0]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[0]['bundleContent'][0]['cost'])))
         data += '%s %s %s 点\n' % (str(convert(response.json()[0]['bundleContent'][1]['itemType']['name'])), str(convert(response.json()[0]['bundleContent'][1]['itemType']['rarity'])), str(convert(response.json()[0]['bundleContent'][1]['cost'])))
-        data += '每周制造: \n'
+        data += '每周制造:\n'
         data += '%s %s %s 点\n' % (str(convert(response.json()[1]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[1]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[1]['bundleContent'][0]['cost'])))
         data += '%s %s %s 点\n' % (str(convert(response.json()[1]['bundleContent'][1]['itemType']['name'])), str(convert(response.json()[1]['bundleContent'][1]['itemType']['rarity'])), str(convert(response.json()[1]['bundleContent'][1]['cost'])))
-        data += '赛季制造: \n'
+        data += '赛季制造:\n'
         data += '%s %s %s 点\n' % (str(convert(response.json()[2]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[2]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[2]['bundleContent'][0]['cost'])))
-        data += '%s %s %s 点\n' % (str(convert(response.json()[3]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[3]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[3]['bundleContent'][0]['cost'])))
+        data += '%s %s %s 点' % (str(convert(response.json()[3]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[3]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[3]['bundleContent'][0]['cost'])))
         await crafting_rotation.send(data)
     else:
         await crafting_rotation.send('查询失败')
@@ -241,6 +244,7 @@ def convert(name):
         'true': '是',
         'false': '否',
         'COMPETITIVE_DODGE_COOLDOWN': '竞技逃跑冷却',
+        'None': '无',
         # Rank
         'Unranked': '菜鸟',
         'Bronze': '青铜',
