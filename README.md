@@ -12,14 +12,19 @@
 </div>
 
 ## 使用方法
-在 `__init__.py` 中第十行 `api_key = '' ` 里填入您的 API 密钥。
+在 `__init__.py` 中第 9 行 `api_key = ''` 里填入您的 API 密钥。
 
 您可以点击 [此处](https://portal.apexlegendsapi.com/) 申请 API 密钥。
 
 在与 Bot 私聊 或 已加入的群聊 中发送命令。
 
 ### 查询玩家信息
-`/bridge [玩家名称]` 、 `/玩家 [玩家名称]` 暂不支持除 PC 外的平台查询。
+`/bridge [玩家名称]` 、
+`/玩家 [玩家名称]`、
+`/uid [玩家UID]`、
+`/UID [玩家UID]`
+
+暂不支持除 PC 外的平台查询。
 
 输出示例：
 ```text
