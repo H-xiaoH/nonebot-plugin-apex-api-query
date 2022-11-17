@@ -1,90 +1,43 @@
 from nonebot import on_command
 from nonebot.adapters import Message
-from nonebot.log import logger
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from httpx import AsyncClient
 
-__plugin_meta__ = PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息\n/maprotation 查询地图轮换\n/predator 查询 PC 端顶尖猎杀者\n/crafting 查询制造轮换')
+__plugin_meta__ = PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息\n/uid [玩家ID]\n/maprotation 查询地图轮换\n/predator 查询顶尖猎杀者\n/crafting 查询制造轮换')
 
 api_key = ''
 api_url = 'https://api.mozambiquehe.re/'
 
 player_statistics = on_command('bridge', aliases= {'玩家'})
+uid_statistics = on_command('uid', aliases={'UID'})
 map_protation = on_command('maprotation', aliases={'地图'})
 predator = on_command('predator', aliases={'猎杀'})
 crafting_rotation = on_command('crafting', aliases={'制造'})
 
 @player_statistics.handle()
 async def _(player_name: Message = CommandArg()):
-    if type(player_name) == int:
-        payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
-    else:
-        payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     service = 'bridge'
-    await player_statistics.send('正在查询: 玩家 %s' % player_name)
+    payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
+    await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
     response = await api_query(service, payload)
-    if response:
-        if 'Error' in response.json():
-            await player_statistics.send('查询失败')
-        else:
-            globals = response.json().get('global')
-            realtime = response.json().get('realtime')
-            data = ''
-            data += '玩家信息:\n'
-            data += '名称: %s\n' % str(globals.get('name'))
-            data += 'UID: %s\n' % str(globals.get('uid'))
-            data += '平台: %s\n' % str(globals.get('platform'))
-            data += '等级: %s\n' % str(globals.get('level'))
-            data += '封禁状态: %s\n' % str(convert(globals.get('bans').get('isActive')))
-            data += '剩余秒数: %s\n' % str(globals.get('bans').get('remainingSeconds'))
-            data += '最后封禁原因: %s\n' % str(convert(globals.get('bans').get('last_banReason')))
-            data += '大逃杀段位: %s %s\n' % (str(convert(globals.get('rank').get('rankName'))), str(globals.get('rank').get('rankDiv')))
-            data += '大逃杀分数: %s\n' % str(globals.get('rank').get('rankScore'))
-            data += '竞技场段位: %s %s\n' % (str(convert(globals.get('arena').get('rankName'))), str(globals.get('arena').get('rankDiv')))
-            data += '竞技场分数: %s\n' % str(globals.get('arena').get('rankScore'))
-            data += '大厅状态: %s\n' % str(convert(realtime.get('lobbyState')))
-            data += '在线: %s\n' % str(convert(realtime.get('isOnline')))
-            data += '游戏中: %s\n' % str(convert(realtime.get('isInGame')))
-            data += '可加入: %s\n' % str(convert(realtime.get('canJoin')))
-            data += '群满员: %s\n' % str(convert(realtime.get('partyFull')))
-            data += '已选传奇: %s\n' % str(convert(realtime.get('selectedLegend')))
-            data += '当前状态: %s' % str(convert(realtime.get('currentState')))
-            await player_statistics.send(data)
-    else:
-        await player_statistics.send('查询失败')        
+    await player_statistics.send(response)
+
+@uid_statistics.handle()
+async def _(player_name: Message = CommandArg()):
+    service = 'bridge'
+    payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
+    await uid_statistics.send('正在查询: UID {}'.format(player_name))
+    response = await api_query(service, payload)
+    await uid_statistics.send(response)
 
 @map_protation.handle()
 async def _():
     service = 'maprotation'
-    payload = {'auth': api_key, 'version': '1'}
+    payload = {'auth': api_key, 'version': '2'}
     await map_protation.send('正在查询: 地图轮换')
     response = await api_query(service, payload)
-    if response:
-        battle_royale = response.json().get('battle_royale')
-        arenas = response.json().get('arenas')
-        ranked = response.json().get('ranked')
-        arenasRanked = response.json().get('arenasRanked')
-        data = ''
-        data += '大逃杀:\n'
-        data += '当前地图: %s\n' % str(convert(battle_royale.get('current').get('map')))
-        data += '下个地图: %s\n' % str(convert(battle_royale.get('next').get('map')))
-        data += '剩余时间: %s\n' % str(convert(battle_royale.get('current').get('remainingTimer')))
-        data += '竞技场:\n'
-        data += '当前地图: %s\n' % str(convert(arenas.get('current').get('map')))
-        data += '下个地图: %s\n' % str(convert(arenas.get('next').get('map')))
-        data += '剩余时间: %s\n' % str(convert(arenas.get('current').get('remainingTimer')))
-        data += '排位赛联盟:\n'
-        data += '当前地图: %s\n' % str(convert(ranked.get('current').get('map')))
-        data += '下个地图: %s\n' % str(convert(ranked.get('next').get('map')))
-        data += '剩余时间: %s\n' % str(convert(ranked.get('current').get('remainingTimer')))
-        data += '排位竞技场:\n'
-        data += '当前地图: %s\n' % str(convert(arenasRanked.get('current').get('map')))
-        data += '下个地图: %s\n' % str(convert(arenasRanked.get('next').get('map')))
-        data += '剩余时间: %s' % str(convert(arenasRanked.get('current').get('remainingTimer')))
-        await map_protation.send(data)
-    else:
-        await map_protation.send('查询失败')
+    await map_protation.send(response)
 
 @predator.handle()
 async def _():
@@ -92,47 +45,7 @@ async def _():
     payload = {'auth': api_key}
     await predator.send('正在查询: 顶尖猎杀者')
     response = await api_query(service, payload)
-    if response:
-        rp = response.json().get('RP')
-        ap = response.json().get('AP')
-        data = ''
-        data += '大逃杀:\n'
-        data += 'PC 端:\n'
-        data += '猎杀者人数: %s\n' % str(rp.get('PC').get('foundRank'))
-        data += '猎杀者分数: %s\n' % str(rp.get('PC').get('val'))
-        data += '大师和猎杀者人数: %s\n' % str(rp.get('PC').get('totalMastersAndPreds'))
-        data += 'PS4/5 端:\n'
-        data += '猎杀者人数: %s\n' % str(rp.get('PS4').get('foundRank'))
-        data += '猎杀者分数: %s\n' % str(rp.get('PS4').get('val'))
-        data += '大师和猎杀者人数: %s\n' % str(rp.get('PS4').get('totalMastersAndPreds'))
-        data += 'Xbox 端:\n'
-        data += '猎杀者人数: %s\n' % str(rp.get('X1').get('foundRank'))
-        data += '猎杀者分数: %s\n' % str(rp.get('X1').get('val'))
-        data += '大师和猎杀者人数: %s\n' % str(rp.get('X1').get('totalMastersAndPreds'))
-        data += 'Switch 端:\n'
-        data += '猎杀者人数: %s\n' % str(rp.get('SWITCH').get('foundRank'))
-        data += '猎杀者分数: %s\n' % str(rp.get('SWITCH').get('val'))
-        data += '大师和猎杀者人数: %s\n' % str(rp.get('SWITCH').get('totalMastersAndPreds'))
-        data += '竞技场:\n'
-        data += 'PC 端:\n'
-        data += '猎杀者人数: %s\n' % str(ap.get('PC').get('foundRank'))
-        data += '猎杀者分数: %s\n' % str(ap.get('PC').get('val'))
-        data += '大师和猎杀者人数: %s\n' % str(ap.get('PC').get('totalMastersAndPreds'))
-        data += 'PS4/5 端:\n'
-        data += '猎杀者人数: %s\n' % str(ap.get('PS4').get('foundRank'))
-        data += '猎杀者分数: %s\n' % str(ap.get('PS4').get('val'))
-        data += '大师和猎杀者人数: %s\n' % str(ap.get('PS4').get('totalMastersAndPreds'))
-        data += 'Xbox 端:\n'
-        data += '猎杀者人数: %s\n' % str(ap.get('X1').get('foundRank'))
-        data += '猎杀者分数: %s\n' % str(ap.get('X1').get('val'))
-        data += '大师和猎杀者人数: %s\n' % str(ap.get('X1').get('totalMastersAndPreds'))
-        data += 'Switch 端:\n'
-        data += '猎杀者人数: %s\n' % str(ap.get('SWITCH').get('foundRank'))
-        data += '猎杀者分数: %s\n' % str(ap.get('SWITCH').get('val'))
-        data += '大师和猎杀者人数: %s' % str(ap.get('SWITCH').get('totalMastersAndPreds'))
-        await predator.send(data)
-    else:
-        await predator.send('查询失败')
+    await predator.send(response)
 
 @crafting_rotation.handle()
 async def _():
@@ -140,32 +53,211 @@ async def _():
     payload = {'auth': api_key}
     await crafting_rotation.send('正在查询: 制造轮换')
     response = await api_query(service, payload)
-    if response:
-        data = ''
-        data += '每日制造:\n'
-        data += '%s %s %s 点\n' % (str(convert(response.json()[0]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[0]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[0]['bundleContent'][0]['cost'])))
-        data += '%s %s %s 点\n' % (str(convert(response.json()[0]['bundleContent'][1]['itemType']['name'])), str(convert(response.json()[0]['bundleContent'][1]['itemType']['rarity'])), str(convert(response.json()[0]['bundleContent'][1]['cost'])))
-        data += '每周制造:\n'
-        data += '%s %s %s 点\n' % (str(convert(response.json()[1]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[1]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[1]['bundleContent'][0]['cost'])))
-        data += '%s %s %s 点\n' % (str(convert(response.json()[1]['bundleContent'][1]['itemType']['name'])), str(convert(response.json()[1]['bundleContent'][1]['itemType']['rarity'])), str(convert(response.json()[1]['bundleContent'][1]['cost'])))
-        data += '赛季制造:\n'
-        data += '%s %s %s 点\n' % (str(convert(response.json()[2]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[2]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[2]['bundleContent'][0]['cost'])))
-        data += '%s %s %s 点' % (str(convert(response.json()[3]['bundleContent'][0]['itemType']['name'])), str(convert(response.json()[3]['bundleContent'][0]['itemType']['rarity'])), str(convert(response.json()[3]['bundleContent'][0]['cost'])))
-        await crafting_rotation.send(data)
-    else:
-        await crafting_rotation.send('查询失败')
+    await crafting_rotation.send(response)
 
 async def api_query(service, payload):
     try:
         async with AsyncClient() as client:
             response = await client.get(api_url + service, params = payload, timeout = None)
-        if response.status_code == 200:
-            return response
+        if response.status_code != 200 or response.text.find('Error') != -1:
+            data = '查询失败: API 错误: {}'.format(response.text)
         else:
-            return
-    except Exception as err:
-        logger.info(str(err))
-        return
+            data = process(service, response)
+        return data
+    except:
+        data = '查询失败: 网络错误'
+        return data
+
+def process(service, response):
+    if service == 'bridge':
+        globals = response.json().get('global')
+        realtime = response.json().get('realtime')
+        data = (
+            '玩家信息:\n'
+            '名称: {}\n'
+            'UID: {}\n'
+            '平台: {}\n'
+            '等级: {}\n'
+            '封禁状态: {}\n'
+            '剩余秒数: {}\n'
+            '最后封禁原因: {}\n'
+            '大逃杀段位: {} {}\n'
+            '大逃杀分数: {}\n'
+            '竞技场段位: {} {}\n'
+            '竞技场分数: {}\n'
+            '大厅状态: {}\n'
+            '在线: {}\n'
+            '游戏中: {}\n'
+            '可加入: {}\n'
+            '群满员: {}\n'
+            '已选传奇: {}\n'
+            '当前状态: {}'
+            .format(
+                globals.get('name'),
+                globals.get('uid'),
+                globals.get('platform'),
+                globals.get('level'),
+                convert(globals.get('bans').get('isActive')),
+                globals.get('bans').get('remainingSeconds'),
+                convert(globals.get('bans').get('last_banReason')),
+                convert(globals.get('rank').get('rankName')),
+                globals.get('rank').get('rankDiv'),
+                globals.get('rank').get('rankScore'),
+                convert(globals.get('arena').get('rankName')),
+                globals.get('arena').get('rankDiv'),
+                globals.get('arena').get('rankScore'),
+                convert(realtime.get('lobbyState')),
+                convert(realtime.get('isOnline')),
+                convert(realtime.get('isInGame')),
+                convert(realtime.get('canJoin')),
+                convert(realtime.get('partyFull')),
+                convert(realtime.get('selectedLegend')),
+                convert(realtime.get('currentState'))
+            )
+        )
+        return data
+
+    elif service == 'maprotation':
+        battle_royale = response.json().get('battle_royale')
+        arenas = response.json().get('arenas')
+        ranked = response.json().get('ranked')
+        arenasRanked = response.json().get('arenasRanked')
+        data = (
+            '大逃杀:\n'
+            '当前地图: {}\n'
+            '下个地图: {}\n'
+            '剩余时间: {}\n'
+            '竞技场:\n'
+            '当前地图: {}\n'
+            '下个地图: {}\n'
+            '剩余时间: {}\n'
+            '排位赛联盟:\n'
+            '当前地图: {}\n'
+            '下个地图: {}\n'
+            '剩余时间: {}\n'
+            '排位竞技场:\n'
+            '当前地图: {}\n'
+            '下个地图: {}\n'
+            '剩余时间: {}'
+            .format(
+                convert(battle_royale.get('current').get('map')),
+                convert(battle_royale.get('next').get('map')),
+                convert(battle_royale.get('current').get('remainingTimer')),
+                convert(arenas.get('current').get('map')),
+                convert(arenas.get('next').get('map')),
+                convert(arenas.get('current').get('remainingTimer')),
+                convert(ranked.get('current').get('map')),
+                convert(ranked.get('next').get('map')),
+                convert(ranked.get('current').get('remainingTimer')),
+                convert(arenasRanked.get('current').get('map')),
+                convert(arenasRanked.get('next').get('map')),
+                convert(arenasRanked.get('current').get('remainingTimer'))
+            )
+        )
+        return data
+
+    elif service == 'predator':
+        rp = response.json().get('RP')
+        ap = response.json().get('AP')
+        data = (
+            '大逃杀:\n'
+            'PC 端:\n'
+            '猎杀者人数: {}\n'
+            '猎杀者分数: {}\n'
+            '大师和猎杀者人数: {}\n'
+            'PS4/5 端:\n'
+            '猎杀者人数: {}\n'
+            '猎杀者分数: {}\n'
+            '大师和猎杀者人数: {}\n'
+            'Xbox 端:\n'
+            '猎杀者人数: {}\n'
+            '猎杀者分数: {}\n'
+            '大师和猎杀者人数: {}\n'
+            'Switch 端:\n'
+            '猎杀者人数: {}\n'
+            '猎杀者分数: {}\n'
+            '大师和猎杀者人数: {}\n'
+            '竞技场:\n'
+            'PC 端:\n'
+            '猎杀者人数: {}\n'
+            '猎杀者分数: {}\n'
+            '大师和猎杀者人数: {}\n'
+            'PS4/5 端:\n'
+            '猎杀者人数: {}\n'
+            '猎杀者分数: {}\n'
+            '大师和猎杀者人数: {}\n'
+            'Xbox 端:\n'
+            '猎杀者人数: {}\n'
+            '猎杀者分数: {}\n'
+            '大师和猎杀者人数: {}\n'
+            'Switch 端:\n'
+            '猎杀者人数: {}\n'
+            '猎杀者分数: {}\n'
+            '大师和猎杀者人数: {}'
+            .format(
+                rp.get('PC').get('foundRank'),
+                rp.get('PC').get('val'),
+                rp.get('PC').get('totalMastersAndPreds'),
+                rp.get('PS4').get('foundRank'),
+                rp.get('PS4').get('val'),
+                rp.get('PS4').get('totalMastersAndPreds'),
+                rp.get('X1').get('foundRank'),
+                rp.get('X1').get('val'),
+                rp.get('X1').get('totalMastersAndPreds'),
+                rp.get('SWITCH').get('foundRank'),
+                rp.get('SWITCH').get('val'),
+                rp.get('SWITCH').get('totalMastersAndPreds'),
+                ap.get('PC').get('foundRank'),
+                ap.get('PC').get('val'),
+                ap.get('PC').get('totalMastersAndPreds'),
+                ap.get('PS4').get('foundRank'),
+                ap.get('PS4').get('val'),
+                ap.get('PS4').get('totalMastersAndPreds'),
+                ap.get('X1').get('foundRank'),
+                ap.get('X1').get('val'),
+                ap.get('X1').get('totalMastersAndPreds'),
+                ap.get('SWITCH').get('foundRank'),
+                ap.get('SWITCH').get('val'),
+                ap.get('SWITCH').get('totalMastersAndPreds')
+            )
+        )
+        return data
+
+    elif service == 'crafting':
+        data = (
+            '每日制造:\n'
+            '{} {} {} 点\n'
+            '{} {} {} 点\n'
+            '每周制造:\n'
+            '{} {} {} 点\n'
+            '{} {} {} 点\n'
+            '赛季制造:\n'
+            '{} {} {} 点\n'
+            '{} {} {} 点'
+            .format(
+                convert(response.json()[0]['bundleContent'][0]['itemType']['name']),
+                convert(response.json()[0]['bundleContent'][0]['itemType']['rarity']),
+                convert(response.json()[0]['bundleContent'][0]['cost']),
+                convert(response.json()[0]['bundleContent'][1]['itemType']['name']),
+                convert(response.json()[0]['bundleContent'][1]['itemType']['rarity']),
+                convert(response.json()[0]['bundleContent'][1]['cost']),
+                convert(response.json()[1]['bundleContent'][0]['itemType']['name']),
+                convert(response.json()[1]['bundleContent'][0]['itemType']['rarity']),
+                convert(response.json()[1]['bundleContent'][0]['cost']),
+                convert(response.json()[1]['bundleContent'][1]['itemType']['name']),
+                convert(response.json()[1]['bundleContent'][1]['itemType']['rarity']),
+                convert(response.json()[1]['bundleContent'][1]['cost']),
+                convert(response.json()[2]['bundleContent'][0]['itemType']['name']),
+                convert(response.json()[2]['bundleContent'][0]['itemType']['rarity']),
+                convert(response.json()[2]['bundleContent'][0]['cost']),
+                convert(response.json()[3]['bundleContent'][0]['itemType']['name']),
+                convert(response.json()[3]['bundleContent'][0]['itemType']['rarity']),
+                convert(response.json()[3]['bundleContent'][0]['cost'])
+            )
+        )
+        return data
+
+    return data
 
 def convert(name):
     names = {
@@ -231,20 +323,8 @@ def convert(name):
         'sniper': '狙击弹药',
         # Other
         'evo_points': '进化点数',
-        'offline': '离线',
-        'online': '在线',
-        0: '否',
-        1: '是',
-        'invite': '邀请',
-        'open': '打开',
-        'inLobby': '在大厅',
-        'inMatch': '比赛中',
         'Rare': '稀有',
         'Epic': '史诗',
-        'true': '是',
-        'false': '否',
-        'COMPETITIVE_DODGE_COOLDOWN': '竞技逃跑冷却',
-        'None': '无',
         # Rank
         'Unranked': '菜鸟',
         'Bronze': '青铜',
@@ -287,5 +367,18 @@ def convert(name):
         # Weapon
         'peacekeeper': '和平捍卫者',
         'spitfire': '喷火轻机枪',
+        # API
+        'offline': '离线',
+        'online': '在线',
+        0: '否',
+        1: '是',
+        'invite': '邀请',
+        'open': '打开',
+        'inLobby': '在大厅',
+        'inMatch': '比赛中',
+        'true': '是',
+        'false': '否',
+        'COMPETITIVE_DODGE_COOLDOWN': '竞技逃跑冷却',
+        'None': '无',
     }
     return names.get(name, name)
