@@ -1,13 +1,16 @@
-from nonebot import on_command
+from nonebot import on_command, get_driver
 from nonebot.adapters import Message
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from httpx import AsyncClient
+from .config import Config
 
 __plugin_meta__ = PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息\n/uid [玩家ID]\n/maprotation 查询地图轮换\n/predator 查询顶尖猎杀者\n/crafting 查询制造轮换')
 
-api_key = ''
-api_url = 'https://api.mozambiquehe.re/'
+plugin_config = Config.parse_obj(get_driver().config)
+
+api_key = plugin_config.apex_api_key
+api_url = plugin_config.apex_api_url
 
 player_statistics = on_command('bridge', aliases= {'玩家'})
 uid_statistics = on_command('uid', aliases={'UID'})
