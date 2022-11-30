@@ -12,7 +12,8 @@
 </div>
 
 ## 使用方法
-在 `__init__.py` 中第 9 行 `api_key = ''` 里填入您的 API 密钥。
+在您的 NoneBot 配置文件中写入 `apex_api_key` 值。
+例如: `apex_api_key=YOUR_API_KEY`
 
 您可以点击 [此处](https://portal.apexlegendsapi.com/) 申请 API 密钥。
 
