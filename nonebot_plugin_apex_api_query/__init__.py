@@ -1,11 +1,25 @@
 from nonebot import on_command, get_driver
-from nonebot.adapters import Message
+from nonebot.adapters.onebot.v11 import Bot, Message, GroupMessageEvent, GROUP, GROUP_ADMIN, GROUP_OWNER
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
+from nonebot.permission import SUPERUSER
+from nonebot_plugin_apscheduler import scheduler
 from httpx import AsyncClient
 from .config import Config
 
-__plugin_meta__ = PluginMetadata('Apex API Query', 'Apex Legends API 查询插件', '/bridge [玩家名称] 查询玩家信息\n/uid [玩家ID]\n/maprotation 查询地图轮换\n/predator 查询顶尖猎杀者\n/crafting 查询制造轮换')
+__plugin_meta__ = PluginMetadata(
+    'Apex API Query',
+    'Apex Legends API 查询插件',
+    '''
+    /bridge [玩家名称] -根据玩家名称玩家信息\n
+    /uid [玩家UID] -根据玩家UID查询玩家信息\n
+    /maprotation -查询地图轮换\n
+    /predator -查询顶尖猎杀者\n
+    /crafting -查询制造轮换\n
+    /submap -订阅地图轮换[每整点查询]\n
+    /subcraft -订阅制造轮换[每日2时查询]
+    '''
+)
 
 plugin_config = Config.parse_obj(get_driver().config)
 
@@ -17,7 +31,12 @@ uid_statistics = on_command('uid', aliases={'UID'})
 map_protation = on_command('maprotation', aliases={'地图'})
 predator = on_command('predator', aliases={'猎杀'})
 crafting_rotation = on_command('crafting', aliases={'制造'})
+sub_map = on_command('submap', aliases={'订阅地图'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+sub_craft = on_command('subcraft', aliases={'订阅制造'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+unsub_map = on_command('unsubmap', aliases={'取消订阅地图'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+unsub_craft = on_command('unsubcraft', aliases={'取消订阅制造'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 
+# 玩家名称查询
 @player_statistics.handle()
 async def _(player_name: Message = CommandArg()):
     service = 'bridge'
@@ -26,6 +45,7 @@ async def _(player_name: Message = CommandArg()):
     response = await api_query(service, payload)
     await player_statistics.send(response)
 
+# 玩家 UID 查询
 @uid_statistics.handle()
 async def _(player_name: Message = CommandArg()):
     service = 'bridge'
@@ -34,6 +54,7 @@ async def _(player_name: Message = CommandArg()):
     response = await api_query(service, payload)
     await uid_statistics.send(response)
 
+# 地图轮换查询
 @map_protation.handle()
 async def _():
     service = 'maprotation'
@@ -42,6 +63,7 @@ async def _():
     response = await api_query(service, payload)
     await map_protation.send(response)
 
+# 顶尖猎杀者查询
 @predator.handle()
 async def _():
     service = 'predator'
@@ -50,6 +72,7 @@ async def _():
     response = await api_query(service, payload)
     await predator.send(response)
 
+# 制造轮换查询
 @crafting_rotation.handle()
 async def _():
     service = 'crafting'
@@ -58,6 +81,59 @@ async def _():
     response = await api_query(service, payload)
     await crafting_rotation.send(response)
 
+# 订阅地图轮换
+@sub_map.handle()
+async def _(bot: Bot, event: GroupMessageEvent):
+    try:
+        scheduler.add_job(func=submap, trigger="cron", id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'group_id': event.group_id})
+        await sub_map.send('已订阅地图轮换')
+    except:
+        await sub_map.send('订阅地图轮换失败')
+
+# 地图轮换定时任务
+async def submap(bot, group_id):
+    service = 'maprotation'
+    payload = {'auth': api_key, 'version': '2'}
+    await bot.send_group_msg(group_id=group_id, message='正在查询: 地图轮换')
+    response = await api_query(service, payload)
+    await bot.send_group_msg(group_id=group_id, message=response)
+
+# 取消订阅地图轮换
+@unsub_map.handle()
+async def _(event: GroupMessageEvent):
+    try:
+        scheduler.remove_job(job_id=(str(event.group_id) + '_map'))
+        await unsub_map.send('已取消订阅地图轮换')
+    except:
+        await unsub_map.send('取消订阅地图轮换失败')
+
+# 订阅制造轮换
+@sub_craft.handle()
+async def _(bot: Bot, event: GroupMessageEvent):
+    try:
+        scheduler.add_job(func=subcraft, trigger="cron", id=(str(event.group_id) + 'craft'), hour=2, minute=1, kwargs={'bot': bot, 'group_id': event.group_id})
+        await sub_craft.send('已订阅制造轮换')
+    except:
+        await sub_craft.send('订阅制造轮换失败')
+
+# 制造轮换定时任务
+async def subcraft(bot, group_id):
+    service = 'crafting'
+    payload = {'auth': api_key}
+    await bot.send_group_msg(group_id=group_id, message='正在查询: 制造轮换')
+    response = await api_query(service, payload)
+    await bot.send_group_msg(group_id=group_id, message=response)
+
+# 取消订阅制造轮换
+@unsub_craft.handle()
+async def _(event: GroupMessageEvent):
+    try:
+        scheduler.remove_job(job_id=(str(event.group_id) + '_craft'))
+        await unsub_craft.send('已取消订阅制造轮换')
+    except:
+        await unsub_craft.send('取消订阅制造轮换失败')
+
+# 异步查询
 async def api_query(service, payload):
     try:
         async with AsyncClient() as client:
@@ -71,7 +147,10 @@ async def api_query(service, payload):
         data = '查询失败: 网络错误'
         return data
 
+# 发送内容文本
 def process(service, response):
+
+    # 玩家数据
     if service == 'bridge':
         globals = response.json().get('global')
         realtime = response.json().get('realtime')
@@ -81,13 +160,14 @@ def process(service, response):
             'UID: {}\n'
             '平台: {}\n'
             '等级: {}\n'
+            '距下一级百分比: {}%\n'
             '封禁状态: {}\n'
             '剩余秒数: {}\n'
             '最后封禁原因: {}\n'
-            '大逃杀段位: {} {}\n'
             '大逃杀分数: {}\n'
-            '竞技场段位: {} {}\n'
+            '大逃杀段位: {} {}\n'
             '竞技场分数: {}\n'
+            '竞技场段位: {} {}\n'
             '大厅状态: {}\n'
             '在线: {}\n'
             '游戏中: {}\n'
@@ -100,15 +180,16 @@ def process(service, response):
                 globals.get('uid'),
                 globals.get('platform'),
                 globals.get('level'),
+                globals.get('toNextLevelPercent'),
                 convert(globals.get('bans').get('isActive')),
                 globals.get('bans').get('remainingSeconds'),
                 convert(globals.get('bans').get('last_banReason')),
+                globals.get('rank').get('rankScore'),
                 convert(globals.get('rank').get('rankName')),
                 globals.get('rank').get('rankDiv'),
-                globals.get('rank').get('rankScore'),
+                globals.get('arena').get('rankScore'),
                 convert(globals.get('arena').get('rankName')),
                 globals.get('arena').get('rankDiv'),
-                globals.get('arena').get('rankScore'),
                 convert(realtime.get('lobbyState')),
                 convert(realtime.get('isOnline')),
                 convert(realtime.get('isInGame')),
@@ -120,6 +201,7 @@ def process(service, response):
         )
         return data
 
+    # 地图轮换数据
     elif service == 'maprotation':
         battle_royale = response.json().get('battle_royale')
         arenas = response.json().get('arenas')
@@ -129,15 +211,15 @@ def process(service, response):
             '大逃杀:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
-            '剩余时间: {}\n'
+            '剩余时间: {}\n\n'
             '竞技场:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
-            '剩余时间: {}\n'
+            '剩余时间: {}\n\n'
             '排位赛联盟:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
-            '剩余时间: {}\n'
+            '剩余时间: {}\n\n'
             '排位竞技场:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
@@ -159,81 +241,99 @@ def process(service, response):
         )
         return data
 
+    # 顶尖猎杀者数据
     elif service == 'predator':
         rp = response.json().get('RP')
         ap = response.json().get('AP')
         data = (
             '大逃杀:\n'
             'PC 端:\n'
-            '猎杀者人数: {}\n'
-            '猎杀者分数: {}\n'
-            '大师和猎杀者人数: {}\n'
+            '顶尖猎杀者人数: {}\n'
+            '顶尖猎杀者分数: {}\n'
+            '顶尖猎杀者UID: {}\n'
+            '大师和顶尖猎杀者人数: {}\n'
             'PS4/5 端:\n'
-            '猎杀者人数: {}\n'
-            '猎杀者分数: {}\n'
-            '大师和猎杀者人数: {}\n'
+            '顶尖猎杀者人数: {}\n'
+            '顶尖猎杀者分数: {}\n'
+            '顶尖猎杀者UID: {}\n'
+            '大师和顶尖猎杀者人数: {}\n'
             'Xbox 端:\n'
-            '猎杀者人数: {}\n'
-            '猎杀者分数: {}\n'
-            '大师和猎杀者人数: {}\n'
+            '顶尖猎杀者人数: {}\n'
+            '顶尖猎杀者分数: {}\n'
+            '顶尖猎杀者UID: {}\n'
+            '大师和顶尖猎杀者人数: {}\n'
             'Switch 端:\n'
-            '猎杀者人数: {}\n'
-            '猎杀者分数: {}\n'
-            '大师和猎杀者人数: {}\n'
+            '顶尖猎杀者人数: {}\n'
+            '顶尖猎杀者分数: {}\n'
+            '顶尖猎杀者UID: {}\n'
+            '大师和顶尖猎杀者人数: {}\n\n'
             '竞技场:\n'
             'PC 端:\n'
-            '猎杀者人数: {}\n'
-            '猎杀者分数: {}\n'
-            '大师和猎杀者人数: {}\n'
+            '顶尖猎杀者人数: {}\n'
+            '顶尖猎杀者分数: {}\n'
+            '顶尖猎杀者UID: {}\n'
+            '大师和顶尖猎杀者人数: {}\n'
             'PS4/5 端:\n'
-            '猎杀者人数: {}\n'
-            '猎杀者分数: {}\n'
-            '大师和猎杀者人数: {}\n'
+            '顶尖猎杀者人数: {}\n'
+            '顶尖猎杀者分数: {}\n'
+            '顶尖猎杀者UID: {}\n'
+            '大师和顶尖猎杀者人数: {}\n'
             'Xbox 端:\n'
-            '猎杀者人数: {}\n'
-            '猎杀者分数: {}\n'
-            '大师和猎杀者人数: {}\n'
+            '顶尖猎杀者人数: {}\n'
+            '顶尖猎杀者分数: {}\n'
+            '顶尖猎杀者UID: {}\n'
+            '大师和顶尖猎杀者人数: {}\n'
             'Switch 端:\n'
-            '猎杀者人数: {}\n'
-            '猎杀者分数: {}\n'
-            '大师和猎杀者人数: {}'
+            '顶尖猎杀者人数: {}\n'
+            '顶尖猎杀者分数: {}\n'
+            '顶尖猎杀者UID: {}\n'
+            '大师和顶尖猎杀者人数: {}'
             .format(
                 rp.get('PC').get('foundRank'),
                 rp.get('PC').get('val'),
+                rp.get('PC').get('uid'),
                 rp.get('PC').get('totalMastersAndPreds'),
                 rp.get('PS4').get('foundRank'),
                 rp.get('PS4').get('val'),
+                rp.get('PS4').get('uid'),
                 rp.get('PS4').get('totalMastersAndPreds'),
                 rp.get('X1').get('foundRank'),
                 rp.get('X1').get('val'),
+                rp.get('X1').get('uid'),
                 rp.get('X1').get('totalMastersAndPreds'),
                 rp.get('SWITCH').get('foundRank'),
                 rp.get('SWITCH').get('val'),
+                rp.get('SWITCH').get('uid'),
                 rp.get('SWITCH').get('totalMastersAndPreds'),
                 ap.get('PC').get('foundRank'),
                 ap.get('PC').get('val'),
+                ap.get('PC').get('uid'),
                 ap.get('PC').get('totalMastersAndPreds'),
                 ap.get('PS4').get('foundRank'),
                 ap.get('PS4').get('val'),
+                ap.get('PS4').get('uid'),
                 ap.get('PS4').get('totalMastersAndPreds'),
                 ap.get('X1').get('foundRank'),
                 ap.get('X1').get('val'),
+                ap.get('X1').get('uid'),
                 ap.get('X1').get('totalMastersAndPreds'),
                 ap.get('SWITCH').get('foundRank'),
                 ap.get('SWITCH').get('val'),
+                ap.get('SWITCH').get('uid'),
                 ap.get('SWITCH').get('totalMastersAndPreds')
             )
         )
         return data
 
+    # 制造数据
     elif service == 'crafting':
         data = (
             '每日制造:\n'
             '{} {} {} 点\n'
-            '{} {} {} 点\n'
+            '{} {} {} 点\n\n'
             '每周制造:\n'
             '{} {} {} 点\n'
-            '{} {} {} 点\n'
+            '{} {} {} 点\n\n'
             '赛季制造:\n'
             '{} {} {} 点\n'
             '{} {} {} 点'
@@ -259,9 +359,9 @@ def process(service, response):
             )
         )
         return data
-
     return data
 
+# 请求内容转换
 def convert(name):
     names = {
         # Map
