@@ -32,8 +32,8 @@ map_protation = on_command('maprotation', aliases={'地图'})
 predator = on_command('predator', aliases={'猎杀'})
 crafting_rotation = on_command('crafting', aliases={'制造'})
 sub_map = on_command('submap', aliases={'订阅地图'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
-sub_craft = on_command('subcraft', aliases={'订阅制造'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 unsub_map = on_command('unsubmap', aliases={'取消订阅地图'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+sub_craft = on_command('subcraft', aliases={'订阅制造'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 unsub_craft = on_command('unsubcraft', aliases={'取消订阅制造'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 
 # 玩家名称查询
@@ -85,10 +85,10 @@ async def _():
 @sub_map.handle()
 async def _(bot: Bot, event: GroupMessageEvent):
     try:
-        scheduler.add_job(func=submap, trigger="cron", id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'group_id': event.group_id})
+        scheduler.add_job(func=submap, trigger='cron', id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'group_id': event.group_id})
         await sub_map.send('已订阅地图轮换')
-    except:
-        await sub_map.send('订阅地图轮换失败')
+    except BaseException as err:
+        await sub_map.send('订阅地图轮换失败: {}'.format(err))
 
 # 地图轮换定时任务
 async def submap(bot, group_id):
@@ -104,17 +104,17 @@ async def _(event: GroupMessageEvent):
     try:
         scheduler.remove_job(job_id=(str(event.group_id) + '_map'))
         await unsub_map.send('已取消订阅地图轮换')
-    except:
-        await unsub_map.send('取消订阅地图轮换失败')
+    except BaseException as err:
+        await unsub_map.send('取消订阅地图轮换失败: {}'.format(err))
 
 # 订阅制造轮换
 @sub_craft.handle()
 async def _(bot: Bot, event: GroupMessageEvent):
     try:
-        scheduler.add_job(func=subcraft, trigger="cron", id=(str(event.group_id) + 'craft'), hour=2, minute=1, kwargs={'bot': bot, 'group_id': event.group_id})
+        scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.group_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'group_id': event.group_id})
         await sub_craft.send('已订阅制造轮换')
-    except:
-        await sub_craft.send('订阅制造轮换失败')
+    except BaseException as err:
+        await sub_craft.send('订阅制造轮换失败: {}'.format(err))
 
 # 制造轮换定时任务
 async def subcraft(bot, group_id):
@@ -130,8 +130,8 @@ async def _(event: GroupMessageEvent):
     try:
         scheduler.remove_job(job_id=(str(event.group_id) + '_craft'))
         await unsub_craft.send('已取消订阅制造轮换')
-    except:
-        await unsub_craft.send('取消订阅制造轮换失败')
+    except BaseException as err:
+        await unsub_craft.send('取消订阅制造轮换失败: {}'.format(err))
 
 # 异步查询
 async def api_query(service, payload):
@@ -143,8 +143,8 @@ async def api_query(service, payload):
         else:
             data = process(service, response)
         return data
-    except:
-        data = '查询失败: 网络错误'
+    except BaseException as err:
+        data = '查询失败: 网络错误: {}'.format(err)
         return data
 
 # 发送内容文本
