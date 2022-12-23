@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-apex-api-query"
-version = "22.11.30"
+version = "22.12.24"
 description = "基于 NoneBot2 的 Apex Legends API 查询插件"
 license = "MIT"
 authors = ["HxiaoH <412454922@qq.com>"]
@@ -14,6 +14,7 @@ packages = [{include = "nonebot_plugin_apex_api_query"}]
 python = "^3.9"
 httpx = "^0.23.0"
 nonebot2 = "^2.0.0rc1"
+nonebot-plugin-apscheduler = "^0.2.0"
 
 
 [build-system]
