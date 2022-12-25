@@ -14,20 +14,40 @@
 </div>
 
 ## 使用方法
-在您的 NoneBot 配置文件中写入 `apex_api_key` 值。
-例如: `apex_api_key=YOUR_API_KEY`
 
-您可以点击 [此处](https://portal.apexlegendsapi.com/) 申请 API 密钥。
+在您的 NoneBot 配置文件中写入 `APEX_API_KEY` 值。
 
-在与 Bot 私聊 或 已加入的群聊 中发送命令。
+您可以在 [NoneBot2 官方文档](https://v2.nonebot.dev/docs/tutorial/configuration) 中获取配置方法。
+
+例如:
+```text
+HOST=127.0.0.1
+PORT=8080
+LOG_LEVEL=DEBUG
+FASTAPI_RELOAD=true
+NICKNAME=["Bot"]
+COMMAND_START=["/", ""]
+COMMAND_SEP=["."]
+APEX_API_KEY=173fd0ee53fb32d4c7063eb5bc700c9e
+```
+
+## Application Programming Interface
+
+您可以在 [此处](https://portal.apexlegendsapi.com/) 申请您自己的 API 密钥。
+
+首次创建 API 密钥时，每两秒只能发出一个请求。通过与您的 Discord 帐户连接，此限制可以增加到每一秒发出两个请求。为此，请单击 [此处](https://portal.apexlegendsapi.com/) 登录您的 API 并链接您的 Discord 账户以增加请求频率。
+
+由于 API 的问题，您只能在查询玩家信息时使用 EA 账户用户名并非 Steam 账户用户名。
 
 ### 查询玩家信息
+
 `/bridge [玩家名称]` 、
-`/玩家 [玩家名称]`、
+`/玩家 [玩家名称]`
+
 `/uid [玩家UID]`、
 `/UID [玩家UID]`
 
-暂不支持除 PC 外的平台查询。
+暂不支持除 PC 以外的平台查询。
 
 输出示例：
 ```text
@@ -54,6 +74,7 @@ UID: 1002727553409
 ```
 
 ### 查询大逃杀地图轮换
+
 `/maprotation` 、 `/地图`
 
 输出示例：
@@ -80,6 +101,7 @@ UID: 1002727553409
 ```
 
 ### 查询猎杀者信息
+
 `/predator` 、 `/猎杀`
 
 输出示例：
@@ -130,6 +152,7 @@ Switch 端:
 ```
 
 ### 查询复制器轮换
+
 `/crafting` 、 `/制造`
 
 输出示例：
@@ -148,10 +171,17 @@ Switch 端:
 ```
 
 ### 订阅制造/地图轮换
-`/subcraft`、`/订阅制造`
+
 `/submap`、`/订阅地图`
-`/unsubcraft`、`/取消订阅制造`
+
 `/unsubmap`、`/取消地图制造`
 
-每日 2 时自动查询制造轮换
-每时自动查询地图轮换
+订阅地图轮换时将每小时自动查询地图轮换并推送。
+
+`/subcraft`、`/订阅制造`
+
+`/unsubcraft`、`/取消订阅制造`
+
+订阅制造轮换时将每日 2 时时自动查询制造轮换并推送。
+
+
