@@ -1,9 +1,10 @@
 from nonebot import on_command, get_driver
-from nonebot.adapters.onebot.v11 import Bot, Message, GroupMessageEvent, GROUP, GROUP_ADMIN, GROUP_OWNER
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, GroupMessageEvent, GROUP, GROUP_ADMIN, GROUP_OWNER
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from nonebot.permission import SUPERUSER
 from nonebot_plugin_apscheduler import scheduler
+from nonebot_plugin_txt2img import Txt2Img
 from httpx import AsyncClient
 from .config import Config
 
@@ -11,12 +12,12 @@ __plugin_meta__ = PluginMetadata(
     'Apex API Query',
     'Apex Legends API 查询插件',
     '''
-    /bridge [玩家名称] -根据玩家名称玩家信息\n
-    /uid [玩家UID] -根据玩家UID查询玩家信息\n
-    /maprotation -查询地图轮换\n
-    /predator -查询顶尖猎杀者\n
-    /crafting -查询制造轮换\n
-    /submap -订阅地图轮换[每整点查询]\n
+    /bridge [玩家名称] -根据玩家名称玩家信息, 
+    /uid [玩家UID] -根据玩家UID查询玩家信息, 
+    /maprotation -查询地图轮换, 
+    /predator -查询顶尖猎杀者, 
+    /crafting -查询制造轮换, 
+    /submap -订阅地图轮换[每整点查询], 
     /subcraft -订阅制造轮换[每日2时查询]
     '''
 )
@@ -31,6 +32,7 @@ uid_statistics = on_command('uid', aliases={'UID'})
 map_protation = on_command('maprotation', aliases={'地图'})
 predator = on_command('predator', aliases={'猎杀'})
 crafting_rotation = on_command('crafting', aliases={'制造'})
+servers = on_command('servers', aliases={'服务'})
 sub_map = on_command('submap', aliases={'订阅地图'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 unsub_map = on_command('unsubmap', aliases={'取消订阅地图'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 sub_craft = on_command('subcraft', aliases={'订阅制造'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
@@ -43,7 +45,13 @@ async def _(player_name: Message = CommandArg()):
     payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
     response = await api_query(service, payload)
-    await player_statistics.send(response)
+    font_size = 32
+    title = '玩家 {}'.format(player_name)
+    text = response
+    img = Txt2Img(font_size)
+    pic = img.save(title, text)
+    msg = MessageSegment.image(pic)
+    await player_statistics.send(msg)
 
 # 玩家 UID 查询
 @uid_statistics.handle()
@@ -52,7 +60,13 @@ async def _(player_name: Message = CommandArg()):
     payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
     await uid_statistics.send('正在查询: UID {}'.format(player_name))
     response = await api_query(service, payload)
-    await uid_statistics.send(response)
+    font_size = 32
+    title = 'UID {}'.format(player_name)
+    text = response
+    img = Txt2Img(font_size)
+    pic = img.save(title, text)
+    msg = MessageSegment.image(pic)
+    await uid_statistics.send(msg)
 
 # 地图轮换查询
 @map_protation.handle()
@@ -61,7 +75,13 @@ async def _():
     payload = {'auth': api_key, 'version': '2'}
     await map_protation.send('正在查询: 地图轮换')
     response = await api_query(service, payload)
-    await map_protation.send(response)
+    font_size = 32
+    title = '地图轮换'
+    text = response
+    img = Txt2Img(font_size)
+    pic = img.save(title, text)
+    msg = MessageSegment.image(pic)
+    await map_protation.send(msg)
 
 # 顶尖猎杀者查询
 @predator.handle()
@@ -70,7 +90,13 @@ async def _():
     payload = {'auth': api_key}
     await predator.send('正在查询: 顶尖猎杀者')
     response = await api_query(service, payload)
-    await predator.send(response)
+    font_size = 32
+    title = '顶尖猎杀者'
+    text = response
+    img = Txt2Img(font_size)
+    pic = img.save(title, text)
+    msg = MessageSegment.image(pic)
+    await predator.send(msg)
 
 # 制造轮换查询
 @crafting_rotation.handle()
@@ -79,7 +105,28 @@ async def _():
     payload = {'auth': api_key}
     await crafting_rotation.send('正在查询: 制造轮换')
     response = await api_query(service, payload)
-    await crafting_rotation.send(response)
+    font_size = 32
+    title = '制造轮换'
+    text = response
+    img = Txt2Img(font_size)
+    pic = img.save(title, text)
+    msg = MessageSegment.image(pic)
+    await crafting_rotation.send(msg)
+
+# 服务器状态查询
+@servers.handle()
+async def _():
+    service = 'servers'
+    payload = {'auth': api_key}
+    await servers.send('正在查询: 服务器状态')
+    response = await api_query(service, payload)
+    font_size = 32
+    title = '服务器状态'
+    text = response
+    img = Txt2Img(font_size)
+    pic = img.save(title, text)
+    msg = MessageSegment.image(pic)
+    await servers.send(msg)
 
 # 订阅地图轮换
 @sub_map.handle()
@@ -96,7 +143,13 @@ async def submap(bot, group_id):
     payload = {'auth': api_key, 'version': '2'}
     await bot.send_group_msg(group_id=group_id, message='正在查询: 地图轮换')
     response = await api_query(service, payload)
-    await bot.send_group_msg(group_id=group_id, message=response)
+    font_size = 32
+    title = '地图轮换'
+    text = response
+    img = Txt2Img(font_size)
+    pic = img.save(title, text)
+    msg = MessageSegment.image(pic)
+    await bot.send_group_msg(group_id=group_id, message=msg)
 
 # 取消订阅地图轮换
 @unsub_map.handle()
@@ -122,7 +175,13 @@ async def subcraft(bot, group_id):
     payload = {'auth': api_key}
     await bot.send_group_msg(group_id=group_id, message='正在查询: 制造轮换')
     response = await api_query(service, payload)
-    await bot.send_group_msg(group_id=group_id, message=response)
+    font_size = 32
+    title = '制造轮换'
+    text = response
+    img = Txt2Img(font_size)
+    pic = img.save(title, text)
+    msg = MessageSegment.image(pic)
+    await bot.send_group_msg(group_id=group_id, message=msg)
 
 # 取消订阅制造轮换
 @unsub_craft.handle()
@@ -147,7 +206,7 @@ async def api_query(service, payload):
         data = '查询失败: 网络错误: {}'.format(err)
         return data
 
-# 发送内容文本
+# 处理获取信息
 def process(service, response):
 
     # 玩家数据
@@ -359,7 +418,95 @@ def process(service, response):
             )
         )
         return data
-    return data
+    
+    # 服务器数据
+    elif service == 'servers':
+        data = (
+            'Origin 登录:\n'
+            '欧盟西部: {}\n'
+            '欧盟东部: {}\n'
+            '美国西部: {}\n'
+            '美国中部: {}\n'
+            '美国东部: {}\n'
+            '南美洲: {}\n'
+            '亚洲: {}\n\n'
+            'EA 融合:\n'
+            '欧盟西部: {}\n'
+            '欧盟东部: {}\n'
+            '美国西部: {}\n'
+            '美国中部: {}\n'
+            '美国东部: {}\n'
+            '南美洲: {}\n'
+            '亚洲: {}\n\n'
+            'EA 账户:\n'
+            '欧盟西部: {}\n'
+            '欧盟东部: {}\n'
+            '美国西部: {}\n'
+            '美国中部: {}\n'
+            '美国东部: {}\n'
+            '南美洲: {}\n'
+            '亚洲: {}\n\n'
+            'Apex 跨平台验证:\n'
+            '欧盟西部: {}\n'
+            '欧盟东部: {}\n'
+            '美国西部: {}\n'
+            '美国中部: {}\n'
+            '美国东部: {}\n'
+            '南美洲: {}\n'
+            '亚洲: {}\n\n'
+            '自我核心测试:\n'
+            '网站状态: {}\n'
+            '统计API: {}\n'
+            '溢出 #1: {}\n'
+            '溢出 #2: {}\n'
+            'Origin API: {}\n'
+            'Playstation API: {}\n'
+            'Xbox API: {}\n\n'
+            '其他平台:\n'
+            'Playstation Network: {}\n'
+            'Xbox Live: {}\n\n'
+            'Data from apexlegendsstatus.com'
+            .format(
+                convert(response.json().get('Origin_login').get('EU-West').get('Status')),
+                convert(response.json().get('Origin_login').get('EU-East').get('Status')),
+                convert(response.json().get('Origin_login').get('US-West').get('Status')),
+                convert(response.json().get('Origin_login').get('US-Central').get('Status')),
+                convert(response.json().get('Origin_login').get('US-East').get('Status')),
+                convert(response.json().get('Origin_login').get('SouthAmerica').get('Status')),
+                convert(response.json().get('Origin_login').get('Asia').get('Status')),
+                convert(response.json().get('EA_novafusion').get('EU-West').get('Status')),
+                convert(response.json().get('EA_novafusion').get('EU-East').get('Status')),
+                convert(response.json().get('EA_novafusion').get('US-West').get('Status')),
+                convert(response.json().get('EA_novafusion').get('US-Central').get('Status')),
+                convert(response.json().get('EA_novafusion').get('US-East').get('Status')),
+                convert(response.json().get('EA_novafusion').get('SouthAmerica').get('Status')),
+                convert(response.json().get('EA_novafusion').get('Asia').get('Status')),
+                convert(response.json().get('EA_accounts').get('EU-West').get('Status')),
+                convert(response.json().get('EA_accounts').get('EU-East').get('Status')),
+                convert(response.json().get('EA_accounts').get('US-West').get('Status')),
+                convert(response.json().get('EA_accounts').get('US-Central').get('Status')),
+                convert(response.json().get('EA_accounts').get('US-East').get('Status')),
+                convert(response.json().get('EA_accounts').get('SouthAmerica').get('Status')),
+                convert(response.json().get('EA_accounts').get('Asia').get('Status')),
+                convert(response.json().get('ApexOauth_Crossplay').get('EU-West').get('Status')),
+                convert(response.json().get('ApexOauth_Crossplay').get('EU-East').get('Status')),
+                convert(response.json().get('ApexOauth_Crossplay').get('US-West').get('Status')),
+                convert(response.json().get('ApexOauth_Crossplay').get('US-Central').get('Status')),
+                convert(response.json().get('ApexOauth_Crossplay').get('US-East').get('Status')),
+                convert(response.json().get('ApexOauth_Crossplay').get('SouthAmerica').get('Status')),
+                convert(response.json().get('ApexOauth_Crossplay').get('Asia').get('Status')),
+                convert(response.json().get('selfCoreTest').get('Status-website').get('Status')),
+                convert(response.json().get('selfCoreTest').get('Stats-API').get('Status')),
+                convert(response.json().get('selfCoreTest').get('Overflow-#1').get('Status')),
+                convert(response.json().get('selfCoreTest').get('Overflow-#2').get('Status')),
+                convert(response.json().get('selfCoreTest').get('Origin-API').get('Status')),
+                convert(response.json().get('selfCoreTest').get('Playstation-API').get('Status')),
+                convert(response.json().get('selfCoreTest').get('Xbox-API').get('Status')),
+                convert(response.json().get('otherPlatforms').get('Playstation-Network').get('Status')),
+                convert(response.json().get('otherPlatforms').get('Xbox-Live').get('Status'))
+            )
+        )
+        return data
 
 # 请求内容转换
 def convert(name):
@@ -483,5 +630,25 @@ def convert(name):
         'false': '否',
         'COMPETITIVE_DODGE_COOLDOWN': '竞技逃跑冷却',
         'None': '无',
+        'EU-West': '欧盟西部',
+        'EU-East': '欧盟东部',
+        'US-West': '美国西部',
+        'US-Central': '美国中部',
+        'US-East': '美国东部',
+        'SouthAmerica': '南美洲',
+        'Asia': '亚洲',
+        'Status-website': '网站状态',
+        'Stats-API': '统计API',
+        'Overflow-#1': '溢出 #1',
+        'Overflow-#2': '溢出 #2',
+        'Origin-API': 'Origin API',
+        'Playstation-API': 'Playstation API',
+        'Xbox-API': 'Xbox API',
+        'Playstation-Network': 'Playstation Network',
+        'Xbox-Live': 'Xbox Live',
+        'UP': '✔在线',
+        'DOWN': '❌离线',
+        'SLOW': '⚠缓慢',
+        'OVERLOADED': '🚧过载',
     }
     return names.get(name, name)
