@@ -14,11 +14,12 @@ __plugin_meta__ = PluginMetadata(
     '''
     /bridge [玩家名称] -根据玩家名称玩家信息, 
     /uid [玩家UID] -根据玩家UID查询玩家信息, 
-    /maprotation -查询地图轮换, 
-    /predator -查询顶尖猎杀者, 
-    /crafting -查询制造轮换, 
-    /submap -订阅地图轮换[每整点查询], 
-    /subcraft -订阅制造轮换[每日2时查询]
+    /maprotation -查询当前地图轮换, 
+    /predator -查询顶尖猎杀者信息, 
+    /crafting -查询当前制造轮换, 
+    /servers -查看当前服务器状态, 
+    /submap -订阅地图轮换(每整点查询), 
+    /subcraft -订阅制造轮换(每日2时查询)
     '''
 )
 
@@ -233,7 +234,8 @@ def process(service, response):
             '可加入: {}\n'
             '群满员: {}\n'
             '已选传奇: {}\n'
-            '当前状态: {}'
+            '当前状态: {}\n'
+            '状态: {}'
             .format(
                 globals.get('name'),
                 globals.get('uid'),
@@ -255,7 +257,8 @@ def process(service, response):
                 convert(realtime.get('canJoin')),
                 convert(realtime.get('partyFull')),
                 convert(realtime.get('selectedLegend')),
-                convert(realtime.get('currentState'))
+                convert(realtime.get('currentState')),
+                realtime.get('currentStateAsText')
             )
         )
         return data
@@ -456,7 +459,7 @@ def process(service, response):
             '亚洲: {}\n\n'
             '自我核心测试:\n'
             '网站状态: {}\n'
-            '统计API: {}\n'
+            '统计 API: {}\n'
             '溢出 #1: {}\n'
             '溢出 #2: {}\n'
             'Origin API: {}\n'
@@ -638,7 +641,7 @@ def convert(name):
         'SouthAmerica': '南美洲',
         'Asia': '亚洲',
         'Status-website': '网站状态',
-        'Stats-API': '统计API',
+        'Stats-API': '统计 API',
         'Overflow-#1': '溢出 #1',
         'Overflow-#2': '溢出 #2',
         'Origin-API': 'Origin API',
@@ -646,9 +649,9 @@ def convert(name):
         'Xbox-API': 'Xbox API',
         'Playstation-Network': 'Playstation Network',
         'Xbox-Live': 'Xbox Live',
-        'UP': '✔在线',
-        'DOWN': '❌离线',
-        'SLOW': '⚠缓慢',
-        'OVERLOADED': '🚧过载',
+        'UP': '在线',
+        'DOWN': '离线',
+        'SLOW': '缓慢',
+        'OVERLOADED': '过载',
     }
     return names.get(name, name)
