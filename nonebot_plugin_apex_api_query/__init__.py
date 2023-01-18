@@ -27,6 +27,7 @@ plugin_config = Config.parse_obj(get_driver().config)
 
 api_key = plugin_config.apex_api_key
 api_url = plugin_config.apex_api_url
+api_t2i = plugin_config.apex_api_t2i
 
 player_statistics = on_command('bridge', aliases= {'玩家'})
 uid_statistics = on_command('uid', aliases={'UID'})
@@ -46,12 +47,10 @@ async def _(player_name: Message = CommandArg()):
     payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
     response = await api_query(service, payload)
-    font_size = 32
-    title = '玩家 {}'.format(player_name)
-    text = response
-    img = Txt2Img(font_size)
-    pic = img.save(title, text)
-    msg = MessageSegment.image(pic)
+    if api_t2i:
+        msg = t2i(service, response)
+    else:
+        msg = response
     await player_statistics.send(msg)
 
 # 玩家 UID 查询
@@ -61,12 +60,10 @@ async def _(player_name: Message = CommandArg()):
     payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
     await uid_statistics.send('正在查询: UID {}'.format(player_name))
     response = await api_query(service, payload)
-    font_size = 32
-    title = 'UID {}'.format(player_name)
-    text = response
-    img = Txt2Img(font_size)
-    pic = img.save(title, text)
-    msg = MessageSegment.image(pic)
+    if api_t2i:
+        msg = t2i(service, response)
+    else:
+        msg = response
     await uid_statistics.send(msg)
 
 # 地图轮换查询
@@ -76,12 +73,10 @@ async def _():
     payload = {'auth': api_key, 'version': '2'}
     await map_protation.send('正在查询: 地图轮换')
     response = await api_query(service, payload)
-    font_size = 32
-    title = '地图轮换'
-    text = response
-    img = Txt2Img(font_size)
-    pic = img.save(title, text)
-    msg = MessageSegment.image(pic)
+    if api_t2i:
+        msg = t2i(service, response)
+    else:
+        msg = response
     await map_protation.send(msg)
 
 # 顶尖猎杀者查询
@@ -91,12 +86,10 @@ async def _():
     payload = {'auth': api_key}
     await predator.send('正在查询: 顶尖猎杀者')
     response = await api_query(service, payload)
-    font_size = 32
-    title = '顶尖猎杀者'
-    text = response
-    img = Txt2Img(font_size)
-    pic = img.save(title, text)
-    msg = MessageSegment.image(pic)
+    if api_t2i:
+        msg = t2i(service, response)
+    else:
+        msg = response
     await predator.send(msg)
 
 # 制造轮换查询
@@ -106,12 +99,10 @@ async def _():
     payload = {'auth': api_key}
     await crafting_rotation.send('正在查询: 制造轮换')
     response = await api_query(service, payload)
-    font_size = 32
-    title = '制造轮换'
-    text = response
-    img = Txt2Img(font_size)
-    pic = img.save(title, text)
-    msg = MessageSegment.image(pic)
+    if api_t2i:
+        msg = t2i(service, response)
+    else:
+        msg = response
     await crafting_rotation.send(msg)
 
 # 服务器状态查询
@@ -121,12 +112,10 @@ async def _():
     payload = {'auth': api_key}
     await servers.send('正在查询: 服务器状态')
     response = await api_query(service, payload)
-    font_size = 32
-    title = '服务器状态'
-    text = response
-    img = Txt2Img(font_size)
-    pic = img.save(title, text)
-    msg = MessageSegment.image(pic)
+    if api_t2i:
+        msg = t2i(service, response)
+    else:
+        msg = response
     await servers.send(msg)
 
 # 订阅地图轮换
@@ -139,17 +128,20 @@ async def _(bot: Bot, event: GroupMessageEvent):
         await sub_map.send('订阅地图轮换失败: {}'.format(err))
 
 # 地图轮换定时任务
-async def submap(bot, group_id):
+async def submap(bot, group_id, api_t2i):
     service = 'maprotation'
     payload = {'auth': api_key, 'version': '2'}
     await bot.send_group_msg(group_id=group_id, message='正在查询: 地图轮换')
     response = await api_query(service, payload)
-    font_size = 32
-    title = '地图轮换'
-    text = response
-    img = Txt2Img(font_size)
-    pic = img.save(title, text)
-    msg = MessageSegment.image(pic)
+    if api_t2i:
+        title = '地图轮换'
+        font_size = 32
+        text = response
+        Txt2Img().set_font_size(font_size)
+        pic = Txt2Img().draw(title, text)
+        msg = MessageSegment.image(pic)
+    else:
+        msg = response
     await bot.send_group_msg(group_id=group_id, message=msg)
 
 # 取消订阅地图轮换
@@ -171,17 +163,20 @@ async def _(bot: Bot, event: GroupMessageEvent):
         await sub_craft.send('订阅制造轮换失败: {}'.format(err))
 
 # 制造轮换定时任务
-async def subcraft(bot, group_id):
+async def subcraft(bot, group_id, api_t2i):
     service = 'crafting'
     payload = {'auth': api_key}
     await bot.send_group_msg(group_id=group_id, message='正在查询: 制造轮换')
     response = await api_query(service, payload)
-    font_size = 32
-    title = '制造轮换'
-    text = response
-    img = Txt2Img(font_size)
-    pic = img.save(title, text)
-    msg = MessageSegment.image(pic)
+    if api_t2i:
+        title = '制造轮换'
+        font_size = 32
+        text = response
+        Txt2Img().set_font_size(font_size)
+        pic = Txt2Img().draw(title, text)
+        msg = MessageSegment.image(pic)
+    else:
+        msg = response
     await bot.send_group_msg(group_id=group_id, message=msg)
 
 # 取消订阅制造轮换
@@ -206,6 +201,26 @@ async def api_query(service, payload):
     except BaseException as err:
         data = '查询失败: 网络错误: {}'.format(err)
         return data
+
+# txt2img
+def t2i(service, response):
+    if service == 'bridge':
+        title = '玩家查询'
+    elif service == 'maprotation':
+        title = '地图轮换'
+    elif service == 'predator':
+        title = '顶尖猎杀者'
+    elif service == 'crafting':
+        title = '制造轮换'
+    elif service == 'servers':
+        title = '服务器状态'
+    font_size = 32
+    text = response
+    Txt2Img().set_font_size(font_size)
+    pic = Txt2Img().draw(title, text)
+    msg = MessageSegment.image(pic)
+    return msg
+
 
 # 处理获取信息
 def process(service, response):
