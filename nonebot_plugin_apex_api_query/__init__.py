@@ -12,14 +12,16 @@ __plugin_meta__ = PluginMetadata(
     'Apex API Query',
     'Apex Legends API 查询插件',
     '''
-    /bridge [玩家名称] -根据玩家名称玩家信息, 
-    /uid [玩家UID] -根据玩家UID查询玩家信息, 
-    /maprotation -查询当前地图轮换, 
-    /predator -查询顶尖猎杀者信息, 
-    /crafting -查询当前制造轮换, 
-    /servers -查看当前服务器状态, 
-    /submap -订阅地图轮换(每整点查询), 
-    /subcraft -订阅制造轮换(每日2时查询)
+    `/bridge [玩家名称]` 、`/玩家 [玩家名称]` - 根据玩家名称查询玩家信息 (暂仅支持查询 PC 平台玩家信息), 
+    `/uid [玩家UID]`、`/UID [玩家UID]` - 根据玩家 UID 查询玩家信息 (暂仅支持查询 PC 平台玩家信息), 
+    `/maprotation` 、 `/地图` - 查询当前地图轮换, 
+    `/predator` 、 `/猎杀` - 查询顶尖猎杀者信息, 
+    `/crafting` 、 `/制造` - 查询当前制造轮换, 
+    `/servers`、`/服务` - 查看当前服务器状态, 
+    `/submap`、`/订阅地图` - 订阅地图轮换(每整点查询)(仅群聊可用), 
+    `/unsubmap`、`/取消订阅地图` - 取消订阅地图轮换(仅群聊可用), 
+    `/subcraft`、`/订阅制造` - 订阅制造轮换(每日2时查询)(仅群聊可用), 
+    `/unsubcraft`、`/取消订阅制造` - 取消订阅制造轮换(仅群聊可用).
     '''
 )
 
