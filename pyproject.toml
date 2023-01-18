@@ -16,7 +16,7 @@ httpx = "^0.23.0"
 nonebot2 = "^2.0.0rc2"
 nonebot-adapter-onebot = "^2.2.0"
 nonebot-plugin-apscheduler = "^0.2.0"
-nonebot-plugin-txt2img = "^0.1.2"
+nonebot-plugin-txt2img = "^0.2.1"
 
 [build-system]
 requires = ["poetry-core"]
