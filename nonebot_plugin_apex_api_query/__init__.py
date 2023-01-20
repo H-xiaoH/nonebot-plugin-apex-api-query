@@ -542,6 +542,8 @@ def convert(name):
         'Overflow': '熔岩流',
         'Phase runner': '相位穿梭器',
         'Party crasher': '派对破坏者',
+        'Drop Off': '原料场',
+        'Unknown': '未知',
         # Barrels
         'barrel_stabilizer': '枪管稳定器',
         'laser_sight': '激光瞄准镜',
