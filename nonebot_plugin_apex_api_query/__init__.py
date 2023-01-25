@@ -124,7 +124,7 @@ async def _():
 @sub_map.handle()
 async def _(bot: Bot, event: GroupMessageEvent):
     try:
-        scheduler.add_job(func=submap, trigger='cron', id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'group_id': event.group_id})
+        scheduler.add_job(func=submap, trigger='cron', id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'group_id': event.group_id, 'api_t2i': api_t2i})
         await sub_map.send('已订阅地图轮换')
     except BaseException as err:
         await sub_map.send('订阅地图轮换失败: {}'.format(err))
@@ -159,7 +159,7 @@ async def _(event: GroupMessageEvent):
 @sub_craft.handle()
 async def _(bot: Bot, event: GroupMessageEvent):
     try:
-        scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.group_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'group_id': event.group_id})
+        scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.group_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'group_id': event.group_id, 'api_t2i': api_t2i})
         await sub_craft.send('已订阅制造轮换')
     except BaseException as err:
         await sub_craft.send('订阅制造轮换失败: {}'.format(err))
