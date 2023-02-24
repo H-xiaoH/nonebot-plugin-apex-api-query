@@ -477,7 +477,7 @@ def convert(name):
         'World\'s Edge': '世界尽头',
         'Olympus': '奥林匹斯',
         'Storm Point': '风暴点',
-        'Broken Moon': '破碎月亮',
+        'Broken Moon': '残月',
         'Encore': '再来一次',
         'Habitat': '栖息地 4',
         'Overflow': '熔岩流',
