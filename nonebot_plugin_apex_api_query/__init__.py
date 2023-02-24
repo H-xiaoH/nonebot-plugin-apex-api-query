@@ -243,8 +243,6 @@ def process(service, response):
             '最后封禁原因: {}\n'
             '大逃杀分数: {}\n'
             '大逃杀段位: {} {}\n'
-            '竞技场分数: {}\n'
-            '竞技场段位: {} {}\n'
             '大厅状态: {}\n'
             '在线: {}\n'
             '游戏中: {}\n'
@@ -265,9 +263,6 @@ def process(service, response):
                 globals.get('rank').get('rankScore'),
                 convert(globals.get('rank').get('rankName')),
                 globals.get('rank').get('rankDiv'),
-                globals.get('arena').get('rankScore'),
-                convert(globals.get('arena').get('rankName')),
-                globals.get('arena').get('rankDiv'),
                 convert(realtime.get('lobbyState')),
                 convert(realtime.get('isOnline')),
                 convert(realtime.get('isInGame')),
@@ -283,23 +278,13 @@ def process(service, response):
     # 地图轮换数据
     elif service == 'maprotation':
         battle_royale = response.json().get('battle_royale')
-        arenas = response.json().get('arenas')
         ranked = response.json().get('ranked')
-        arenasRanked = response.json().get('arenasRanked')
         data = (
             '大逃杀:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
             '剩余时间: {}\n\n'
-            '竞技场:\n'
-            '当前地图: {}\n'
-            '下个地图: {}\n'
-            '剩余时间: {}\n\n'
             '排位赛联盟:\n'
-            '当前地图: {}\n'
-            '下个地图: {}\n'
-            '剩余时间: {}\n\n'
-            '排位竞技场:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
             '剩余时间: {}'
@@ -307,15 +292,9 @@ def process(service, response):
                 convert(battle_royale.get('current').get('map')),
                 convert(battle_royale.get('next').get('map')),
                 convert(battle_royale.get('current').get('remainingTimer')),
-                convert(arenas.get('current').get('map')),
-                convert(arenas.get('next').get('map')),
-                convert(arenas.get('current').get('remainingTimer')),
                 convert(ranked.get('current').get('map')),
                 convert(ranked.get('next').get('map')),
                 convert(ranked.get('current').get('remainingTimer')),
-                convert(arenasRanked.get('current').get('map')),
-                convert(arenasRanked.get('next').get('map')),
-                convert(arenasRanked.get('current').get('remainingTimer'))
             )
         )
         return data
@@ -323,30 +302,8 @@ def process(service, response):
     # 顶尖猎杀者数据
     elif service == 'predator':
         rp = response.json().get('RP')
-        ap = response.json().get('AP')
         data = (
             '大逃杀:\n'
-            'PC 端:\n'
-            '顶尖猎杀者人数: {}\n'
-            '顶尖猎杀者分数: {}\n'
-            '顶尖猎杀者UID: {}\n'
-            '大师和顶尖猎杀者人数: {}\n'
-            'PS4/5 端:\n'
-            '顶尖猎杀者人数: {}\n'
-            '顶尖猎杀者分数: {}\n'
-            '顶尖猎杀者UID: {}\n'
-            '大师和顶尖猎杀者人数: {}\n'
-            'Xbox 端:\n'
-            '顶尖猎杀者人数: {}\n'
-            '顶尖猎杀者分数: {}\n'
-            '顶尖猎杀者UID: {}\n'
-            '大师和顶尖猎杀者人数: {}\n'
-            'Switch 端:\n'
-            '顶尖猎杀者人数: {}\n'
-            '顶尖猎杀者分数: {}\n'
-            '顶尖猎杀者UID: {}\n'
-            '大师和顶尖猎杀者人数: {}\n\n'
-            '竞技场:\n'
             'PC 端:\n'
             '顶尖猎杀者人数: {}\n'
             '顶尖猎杀者分数: {}\n'
@@ -384,22 +341,6 @@ def process(service, response):
                 rp.get('SWITCH').get('val'),
                 rp.get('SWITCH').get('uid'),
                 rp.get('SWITCH').get('totalMastersAndPreds'),
-                ap.get('PC').get('foundRank'),
-                ap.get('PC').get('val'),
-                ap.get('PC').get('uid'),
-                ap.get('PC').get('totalMastersAndPreds'),
-                ap.get('PS4').get('foundRank'),
-                ap.get('PS4').get('val'),
-                ap.get('PS4').get('uid'),
-                ap.get('PS4').get('totalMastersAndPreds'),
-                ap.get('X1').get('foundRank'),
-                ap.get('X1').get('val'),
-                ap.get('X1').get('uid'),
-                ap.get('X1').get('totalMastersAndPreds'),
-                ap.get('SWITCH').get('foundRank'),
-                ap.get('SWITCH').get('val'),
-                ap.get('SWITCH').get('uid'),
-                ap.get('SWITCH').get('totalMastersAndPreds')
             )
         )
         return data
