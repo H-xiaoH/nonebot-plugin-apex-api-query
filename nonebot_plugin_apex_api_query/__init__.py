@@ -279,12 +279,17 @@ def process(service, response):
     elif service == 'maprotation':
         battle_royale = response.json().get('battle_royale')
         ranked = response.json().get('ranked')
+        ltm = response.json().get('ltm')
         data = (
             '大逃杀:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
             '剩余时间: {}\n\n'
             '排位赛联盟:\n'
+            '当前地图: {}\n'
+            '下个地图: {}\n'
+            '剩余时间: {}\n\n'
+            '限时:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
             '剩余时间: {}'
@@ -295,6 +300,9 @@ def process(service, response):
                 convert(ranked.get('current').get('map')),
                 convert(ranked.get('next').get('map')),
                 convert(ranked.get('current').get('remainingTimer')),
+                convert(ltm.get('current').get('map')),
+                convert(ltm.get('next').get('map')),
+                convert(ltm.get('current').get('remainingTimer'))
             )
         )
         return data
