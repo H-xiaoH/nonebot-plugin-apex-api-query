@@ -207,16 +207,7 @@ async def api_query(service, payload):
 
 # txt2img
 def t2i(service, response):
-    if service == 'bridge':
-        title = '玩家查询'
-    elif service == 'maprotation':
-        title = '地图轮换'
-    elif service == 'predator':
-        title = '顶尖猎杀者'
-    elif service == 'crafting':
-        title = '制造轮换'
-    elif service == 'servers':
-        title = '服务器状态'
+    title = convert(service)
     font_size = 32
     text = response
     Txt2Img().set_font_size(font_size)
@@ -648,5 +639,11 @@ def convert(name):
         'DOWN': '离线',
         'SLOW': '缓慢',
         'OVERLOADED': '过载',
+        # Plugin
+        'bridge': '玩家查询',
+        'maprotation': '地图轮换',
+        'predator': '顶尖猎杀者',
+        'crafting': '制造轮换',
+        'servers': '服务器状态'
     }
     return names.get(name, name)
