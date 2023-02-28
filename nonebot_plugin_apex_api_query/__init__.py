@@ -1,11 +1,12 @@
 from nonebot import on_command, get_driver
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, GroupMessageEvent, GROUP, GROUP_ADMIN, GROUP_OWNER
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, PrivateMessageEvent, GroupMessageEvent, GROUP, GROUP_ADMIN, GROUP_OWNER
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from nonebot.permission import SUPERUSER
 from nonebot_plugin_apscheduler import scheduler
 from nonebot_plugin_txt2img import Txt2Img
 from httpx import AsyncClient
+from typing import Union
 from .config import Config
 
 __plugin_meta__ = PluginMetadata(
@@ -44,7 +45,7 @@ unsub_craft = on_command('unsubcraft', aliases={'取消订阅制造'}, permissio
 
 # 玩家名称查询
 @player_statistics.handle()
-async def _(player_name: Message = CommandArg()):
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], player_name: Message = CommandArg()):
     service = 'bridge'
     payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
@@ -57,7 +58,7 @@ async def _(player_name: Message = CommandArg()):
 
 # 玩家 UID 查询
 @uid_statistics.handle()
-async def _(player_name: Message = CommandArg()):
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], player_name: Message = CommandArg()):
     service = 'bridge'
     payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
     await uid_statistics.send('正在查询: UID {}'.format(player_name))
@@ -70,7 +71,7 @@ async def _(player_name: Message = CommandArg()):
 
 # 地图轮换查询
 @map_protation.handle()
-async def _():
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     service = 'maprotation'
     payload = {'auth': api_key, 'version': '2'}
     await map_protation.send('正在查询: 地图轮换')
@@ -83,7 +84,7 @@ async def _():
 
 # 顶尖猎杀者查询
 @predator.handle()
-async def _():
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     service = 'predator'
     payload = {'auth': api_key}
     await predator.send('正在查询: 顶尖猎杀者')
@@ -96,7 +97,7 @@ async def _():
 
 # 制造轮换查询
 @crafting_rotation.handle()
-async def _():
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     service = 'crafting'
     payload = {'auth': api_key}
     await crafting_rotation.send('正在查询: 制造轮换')
@@ -109,7 +110,7 @@ async def _():
 
 # 服务器状态查询
 @servers.handle()
-async def _():
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     service = 'servers'
     payload = {'auth': api_key}
     await servers.send('正在查询: 服务器状态')
@@ -148,7 +149,7 @@ async def submap(bot, group_id, api_t2i):
 
 # 取消订阅地图轮换
 @unsub_map.handle()
-async def _(event: GroupMessageEvent):
+async def _(bot: Bot, event: GroupMessageEvent):
     try:
         scheduler.remove_job(job_id=(str(event.group_id) + '_map'))
         await unsub_map.send('已取消订阅地图轮换')
@@ -183,7 +184,7 @@ async def subcraft(bot, group_id, api_t2i):
 
 # 取消订阅制造轮换
 @unsub_craft.handle()
-async def _(event: GroupMessageEvent):
+async def _(bot: Bot, event: GroupMessageEvent):
     try:
         scheduler.remove_job(job_id=(str(event.group_id) + '_craft'))
         await unsub_craft.send('已取消订阅制造轮换')
