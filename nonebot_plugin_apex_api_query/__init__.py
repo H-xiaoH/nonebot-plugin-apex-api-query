@@ -9,6 +9,7 @@ from httpx import AsyncClient
 from typing import Union
 from .config import Config
 
+# 插件元数据
 __plugin_meta__ = PluginMetadata(
     'Apex API Query',
     'Apex Legends API 查询插件',
@@ -26,12 +27,13 @@ __plugin_meta__ = PluginMetadata(
     '''
 )
 
+# 读取配置
 plugin_config = Config.parse_obj(get_driver().config)
-
 api_key = plugin_config.apex_api_key
 api_url = plugin_config.apex_api_url
 api_t2i = plugin_config.apex_api_t2i
 
+# 创建事件响应器
 player_statistics = on_command('bridge', aliases= {'玩家'})
 uid_statistics = on_command('uid', aliases={'UID'})
 map_protation = on_command('maprotation', aliases={'地图'})
