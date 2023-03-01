@@ -486,6 +486,7 @@ def convert(name):
         'Phase runner': '相位穿梭器',
         'Party crasher': '派对破坏者',
         'Drop Off': '原料场',
+        'Skull Town': '骷髅镇',
         'Unknown': '未知',
         # Barrels
         'barrel_stabilizer': '枪管稳定器',
