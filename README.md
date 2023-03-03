@@ -1,48 +1,29 @@
-<p align="center">
-  <a href="https://v2.nonebot.dev/"><img src="https://v2.nonebot.dev/logo.png" width="200" height="200" alt="nonebot"></a>
-</p>
+<div align="center">
+  <a href="https://v2.nonebot.dev/store"><img src="https://github.com/A-kirami/nonebot-plugin-template/blob/resources/nbp_logo.png" width="180" height="180" alt="NoneBotPluginLogo"></a>
+  <br>
+  <p><img src="https://github.com/A-kirami/nonebot-plugin-template/blob/resources/NoneBotPlugin.svg" width="240" alt="NoneBotPluginText"></p>
+</div>
 
 <div align="center">
 
 # nonebot-plugin-apex-api-query
 
-*✨ NoneBot Apex Legends API 查询插件 ✨*
+_✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 
-![GitHub](https://img.shields.io/github/license/H-xiaoH/nonebot-plugin-apex-api-query)
-![PyPI](https://img.shields.io/pypi/v/nonebot-plugin-apex-api-query)
+
+<a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/H-xiaoH/nonebot-plugin-apex-api-query.svg" alt="license">
+</a>
+<a href="https://pypi.python.org/pypi/nonebot-plugin-apex-api-query">
+    <img src="https://img.shields.io/pypi/v/nonebot-plugin-apex-api-query.svg" alt="pypi">
+</a>
+<img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="python">
 
 </div>
 
-## 配置项
+## 📖 介绍
 
-您可以在 [NoneBot2 官方文档](https://v2.nonebot.dev/docs/tutorial/configuration) 中查看配置文件的配置方法。
-
-例如:
-```text
-HOST=127.0.0.1
-PORT=8080
-LOG_LEVEL=DEBUG
-FASTAPI_RELOAD=true
-NICKNAME=["Bot"]
-COMMAND_START=["/", ""]
-COMMAND_SEP=["."]
-APEX_API_KEY='173fd0ee53fb32d4c7063eb5bc700c9e'
-```
-
-### APEX_API_KEY
-
-您的 32 位 API 密钥。
-
-`APEX_API_KEY='173fd0ee53fb32d4c7063eb5bc700c9e'`
-
-### APEX_API_T2I
-
-文字转图片发送内容
-
-- `True` = 开启 (默认)
-- `False` = 关闭
-
-## Application Programming Interface
+基于 NoneBot2 且使用 OneBot V11 协议 的 [Apex Legends API](https://apexlegendsstatus.com/) 查询插件。
 
 您可以在 [此处](https://portal.apexlegendsapi.com/) 申请您自己的 API 密钥。
 申请密钥后重新在 [此页面](https://portal.apexlegendsapi.com/) 登录 API 密钥以测试密钥是否可用。
@@ -50,25 +31,74 @@ APEX_API_KEY='173fd0ee53fb32d4c7063eb5bc700c9e'
 
 由于 API 的问题，您只能在查询玩家信息时使用 EA 账户用户名并非 Steam 账户用户名。
 
-## 使用方式
+## 💿 安装
 
-`/bridge [玩家名称]` 、`/玩家 [玩家名称]` - 根据玩家名称查询玩家信息 (暂仅支持查询 PC 平台玩家信息)
+<details>
+<summary>使用 nb-cli 安装</summary>
+在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
-`/uid [玩家UID]`、`/UID [玩家UID]` - 根据玩家 UID 查询玩家信息 (暂仅支持查询 PC 平台玩家信息)
+    nb plugin install nonebot_plugin_apex_api_query
 
-`/maprotation` 、 `/地图` - 查询当前地图轮换
+</details>
 
-`/predator` 、 `/猎杀` - 查询顶尖猎杀者信息
+<details>
+<summary>使用包管理器安装</summary>
+在 nonebot2 项目的插件目录下, 打开命令行, 根据你使用的包管理器, 输入相应的安装命令
 
-`/crafting` 、 `/制造` - 查询当前制造轮换
+<details>
+<summary>pip</summary>
 
-`/servers`、`/服务` - 查看当前服务器状态
+    pip install nonebot_plugin_apex_api_query
+</details>
+<details>
+<summary>poetry</summary>
 
-`/submap`、`/订阅地图` - 订阅地图轮换(每整点查询)(仅群聊可用)
+    poetry add nonebot_plugin_apex_api_query
+</details>
 
-`/unsubmap`、`/取消订阅地图` - 取消订阅地图轮换(仅群聊可用)
+打开 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分追加写入
 
-`/subcraft`、`/订阅制造` - 订阅制造轮换(每日2时查询)(仅群聊可用)
+    plugins = ["nonebot_plugin_apex_api_query"]
 
-`/unsubcraft`、`/取消订阅制造` - 取消订阅制造轮换(仅群聊可用)
+</details>
 
+## ⚙️ 配置
+
+在 nonebot2 项目的`.env`文件中添加下表中的必填配置
+
+| 配置项 | 必填 | 默认值 | 说明 |
+|:-----:|:----:|:----:|:----:|
+| APEX_API_KEY | 是 | None | API 密钥 |
+| APEX_API_URL | 否 | https://api.mozambiquehe.re/ | API 链接地址 |
+| APEX_API_T2I | 否 | True | 文字转图片 |
+
+## 🎉 使用
+### 指令表
+| 指令 | 权限 | 需要@ | 范围 | 说明 |
+|:-----:|:----:|:----:|:----:|:----:|
+| 玩家 [玩家名称] | 无 | 否 | 私聊/群聊 | 根据玩家名称查询信息 |
+| UID [玩家UID] | 无 | 否 | 私聊/群聊 | 根据玩家 UID 查询信息 |
+| 地图 | 无 | 否 | 私聊/群聊 | 查询地图轮换 |
+| 猎杀 | 无 | 否 | 私聊/群聊 | 查询各平台顶尖猎杀者信息 |
+| 制造 | 无 | 否 | 私聊/群聊 | 查询复制器轮换 |
+| 服务 | 无 | 否 | 私聊/群聊 | 查询服务器状态 |
+| 订阅地图 | 管理 | 否 | 群聊 | 每整点查询地图轮换 |
+| 取消订阅地图 | 管理 | 否 | 群聊 | 取消每整点查询地图轮换 |
+| 订阅制造 | 管理 | 否 | 群聊 | 每日 2 时查询复制器轮换 |
+| 取消订阅制造 | 管理 | 否 | 群聊 | 取消每日 2 时查询复制器轮换 |
+
+## 📄 ToDo
+
+玩家 ID 与 QQ 账号绑定。
+
+支持 QQ 频道。
+
+## 🌸 致谢
+
+- [@nonebot](https://github.com/nonebot) 强大的 [NoneBot2 机器人框架](https://github.com/nonebot/nonebot2)。
+
+- [@nonebot](https://github.com/nonebot) 订阅功能基于 [APScheduler 定时任务插件](https://github.com/nonebot/plugin-apscheduler)。
+
+- [@A-kirami](https://github.com/A-kirami) 使用其 NoneBot Plugin [README 模板](https://github.com/A-kirami/nonebot-plugin-template)。
+
+- [@mobyw](https://github.com/mobyw) 文字转图片功能源于 [轻量文字转图片插件](https://github.com/mobyw/nonebot-plugin-txt2img)
