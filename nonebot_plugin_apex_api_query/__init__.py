@@ -488,6 +488,7 @@ def convert(name):
         'Drop Off': '原料场',
         'Skull Town': '骷髅镇',
         'Unknown': '未知',
+        'None': '无',
         # Barrels
         'barrel_stabilizer': '枪管稳定器',
         'laser_sight': '激光瞄准镜',
