@@ -1,8 +1,11 @@
-from nonebot import on_command, get_driver
+from nonebot import on_command, get_driver, require
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, PrivateMessageEvent, GroupMessageEvent, GROUP, GROUP_ADMIN, GROUP_OWNER
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from nonebot.permission import SUPERUSER
+
+require('nonebot_plugin_apscheduler')
+
 from nonebot_plugin_apscheduler import scheduler
 from nonebot_plugin_txt2img import Txt2Img
 from httpx import AsyncClient
