@@ -519,7 +519,10 @@ def convert(name):
         'Phase runner': '相位穿梭器',
         'Party crasher': '派对破坏者',
         'Drop Off': '原料场',
-        'Skull Town': '骷髅镇',
+        'Skulltown': '骷髅镇',
+        'Barometer': '气压计',
+        'Wall': '高墙',
+        'Siphon': '岩浆汲取器',
         'Unknown': '未知',
         'None': '无',
         # Barrels
