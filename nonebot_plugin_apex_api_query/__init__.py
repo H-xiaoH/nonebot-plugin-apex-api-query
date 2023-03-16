@@ -1,5 +1,6 @@
 from nonebot import on_command, get_driver, require
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, PrivateMessageEvent, GroupMessageEvent, GROUP, GROUP_ADMIN, GROUP_OWNER
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, PrivateMessageEvent, GroupMessageEvent, GROUP_ADMIN, GROUP_OWNER
+from nonebot_plugin_guild_patch import GuildMessageEvent, GUILD_ADMIN, GUILD_OWNER, GUILD_SUPERUSER
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from nonebot.permission import SUPERUSER
@@ -43,14 +44,14 @@ map_protation = on_command('maprotation', aliases={'地图'})
 predator = on_command('predator', aliases={'猎杀'})
 crafting_rotation = on_command('crafting', aliases={'制造'})
 servers = on_command('servers', aliases={'服务'})
-sub_map = on_command('submap', aliases={'订阅地图'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
-unsub_map = on_command('unsubmap', aliases={'取消订阅地图'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
-sub_craft = on_command('subcraft', aliases={'订阅制造'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
-unsub_craft = on_command('unsubcraft', aliases={'取消订阅制造'}, permission=GROUP and SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+sub_map = on_command('submap', aliases={'订阅地图'}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+unsub_map = on_command('unsubmap', aliases={'取消订阅地图'}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+sub_craft = on_command('subcraft', aliases={'订阅制造'}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+unsub_craft = on_command('unsubcraft', aliases={'取消订阅制造'}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
 
 # 玩家名称查询
 @player_statistics.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], player_name: Message = CommandArg()):
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
     service = 'bridge'
     payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
@@ -63,7 +64,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], play
 
 # 玩家 UID 查询
 @uid_statistics.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], player_name: Message = CommandArg()):
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
     service = 'bridge'
     payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
     await uid_statistics.send('正在查询: UID {}'.format(player_name))
@@ -76,7 +77,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], play
 
 # 地图轮换查询
 @map_protation.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
     service = 'maprotation'
     payload = {'auth': api_key, 'version': '2'}
     await map_protation.send('正在查询: 地图轮换')
@@ -89,7 +90,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
 
 # 顶尖猎杀者查询
 @predator.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
     service = 'predator'
     payload = {'auth': api_key}
     await predator.send('正在查询: 顶尖猎杀者')
@@ -102,7 +103,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
 
 # 制造轮换查询
 @crafting_rotation.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
     service = 'crafting'
     payload = {'auth': api_key}
     await crafting_rotation.send('正在查询: 制造轮换')
@@ -115,7 +116,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
 
 # 服务器状态查询
 @servers.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
+async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
     service = 'servers'
     payload = {'auth': api_key}
     await servers.send('正在查询: 服务器状态')
@@ -128,18 +129,25 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
 
 # 订阅地图轮换
 @sub_map.handle()
-async def _(bot: Bot, event: GroupMessageEvent):
+async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
-        scheduler.add_job(func=submap, trigger='cron', id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'group_id': event.group_id, 'api_t2i': api_t2i})
-        await sub_map.send('已订阅地图轮换')
+        if isinstance(event, GroupMessageEvent):
+            scheduler.add_job(func=submap, trigger='cron', id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
+            await sub_map.send('已订阅地图轮换')
+        elif isinstance(event, GuildMessageEvent):
+            scheduler.add_job(func=submap, trigger='cron', id=(str(event.channel_id) + '_map'), minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
+            await sub_map.send('已订阅地图轮换')
     except BaseException as err:
         await sub_map.send('订阅地图轮换失败: {}'.format(err))
 
 # 地图轮换定时任务
-async def submap(bot, group_id, api_t2i):
+async def submap(bot, event, api_t2i):
     service = 'maprotation'
     payload = {'auth': api_key, 'version': '2'}
-    await bot.send_group_msg(group_id=group_id, message='正在查询: 地图轮换')
+    if isinstance(event, GroupMessageEvent):
+        await bot.send_group_msg(group_id=event.group_id, message='正在查询: 制造轮换')
+    elif isinstance(event, GuildMessageEvent):
+        await bot.send_guild_channel_msg(guild_id=event.guild_id, channel_id=event.channel_id, message='正在查询: 制造轮换')
     response = await api_query(service, payload)
     if api_t2i:
         title = '地图轮换'
@@ -150,31 +158,46 @@ async def submap(bot, group_id, api_t2i):
         msg = MessageSegment.image(pic)
     else:
         msg = response
-    await bot.send_group_msg(group_id=group_id, message=msg)
+    if isinstance(event, GroupMessageEvent):
+        await bot.send_group_msg(group_id=event.group_id, message=msg)
+    elif isinstance(event, GuildMessageEvent):
+        await bot.send_guild_channel_msg(guild_id=event.guild_id, channel_id=event.channel_id, message=msg)
 
 # 取消订阅地图轮换
 @unsub_map.handle()
-async def _(bot: Bot, event: GroupMessageEvent):
+async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
-        scheduler.remove_job(job_id=(str(event.group_id) + '_map'))
-        await unsub_map.send('已取消订阅地图轮换')
+        if isinstance(event, GroupMessageEvent):
+            scheduler.remove_job(job_id=(str(event.group_id) + '_map'))
+            await unsub_map.send('已取消订阅地图轮换')
+        elif isinstance(event, GuildMessageEvent):
+            scheduler.remove_job(job_id=(str(event.channel_id) + '_map'))
+            await unsub_map.send('已取消订阅地图轮换')
     except BaseException as err:
         await unsub_map.send('取消订阅地图轮换失败: {}'.format(err))
 
 # 订阅制造轮换
 @sub_craft.handle()
-async def _(bot: Bot, event: GroupMessageEvent):
+async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
-        scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.group_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'group_id': event.group_id, 'api_t2i': api_t2i})
-        await sub_craft.send('已订阅制造轮换')
+        if isinstance(event, GroupMessageEvent):
+            scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.group_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
+            await sub_craft.send('已订阅制造轮换')
+        elif isinstance(event, GuildMessageEvent):
+            scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.channel_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
+            await sub_craft.send('已订阅制造轮换')
     except BaseException as err:
         await sub_craft.send('订阅制造轮换失败: {}'.format(err))
 
+
 # 制造轮换定时任务
-async def subcraft(bot, group_id, api_t2i):
+async def subcraft(bot, event, api_t2i):
     service = 'crafting'
     payload = {'auth': api_key}
-    await bot.send_group_msg(group_id=group_id, message='正在查询: 制造轮换')
+    if isinstance(event, GroupMessageEvent):
+        await bot.send_group_msg(group_id=event.group_id, message='正在查询: 制造轮换')
+    elif isinstance(event, GuildMessageEvent):
+        await bot.send_guild_channel_msg(guild_id=event.guild_id, channel_id=event.channel_id, message='正在查询: 制造轮换')
     response = await api_query(service, payload)
     if api_t2i:
         title = '制造轮换'
@@ -185,14 +208,21 @@ async def subcraft(bot, group_id, api_t2i):
         msg = MessageSegment.image(pic)
     else:
         msg = response
-    await bot.send_group_msg(group_id=group_id, message=msg)
+    if isinstance(event, GroupMessageEvent):
+        await bot.send_group_msg(group_id=event.group_id, message=msg)
+    elif isinstance(event, GuildMessageEvent):
+        await bot.send_guild_channel_msg(guild_id=event.guild_id, channel_id=event.channel_id, message=msg)
 
 # 取消订阅制造轮换
 @unsub_craft.handle()
-async def _(bot: Bot, event: GroupMessageEvent):
+async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
-        scheduler.remove_job(job_id=(str(event.group_id) + '_craft'))
-        await unsub_craft.send('已取消订阅制造轮换')
+        if isinstance(event, GroupMessageEvent):
+            scheduler.remove_job(job_id=(str(event.group_id) + '_craft'))
+            await unsub_craft.send('已取消订阅制造轮换')
+        elif isinstance(event, GuildMessageEvent):
+            scheduler.remove_job(job_id=(str(event.channel_id) + '_craft'))
+            await unsub_craft.send('已取消订阅制造轮换')
     except BaseException as err:
         await unsub_craft.send('取消订阅制造轮换失败: {}'.format(err))
 
