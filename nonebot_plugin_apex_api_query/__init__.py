@@ -78,7 +78,7 @@ async def player_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEv
         return
     service = 'bridge'
     payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
-    await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
+    await player_statistics.send(f'正在查询: 玩家 {player_name}')
     response = await api_query(service, payload)
     if api_t2i:
         msg = await t2i(service, response)
@@ -97,7 +97,7 @@ async def uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent
             return
     service = 'bridge'
     payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
-    await uid_statistics.send('正在查询: UID {}'.format(player_name))
+    await uid_statistics.send(f'正在查询: UID {player_name}')
     response = await api_query(service, payload)
     if api_t2i:
         msg = await t2i(service, response)
@@ -166,9 +166,9 @@ async def submap_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEven
             await sub_map.send('已订阅地图轮换')
         elif isinstance(event, GuildMessageEvent):
             scheduler.add_job(func=submap, trigger='cron', id=(str(event.channel_id) + '_map'), minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
-            await sub_map.send('已订阅地图轮换')
-    except BaseException as err:
-        await sub_map.send('订阅地图轮换失败: {}'.format(err))
+        await sub_map.send('已订阅地图轮换。')
+    except Exception as err:
+        await sub_map.send(f'订阅地图轮换失败。\n{err}')
 
 # 地图轮换定时任务
 async def submap(bot, event, api_t2i):
@@ -202,9 +202,9 @@ async def unsub_map_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageE
             await unsub_map.send('已取消订阅地图轮换')
         elif isinstance(event, GuildMessageEvent):
             scheduler.remove_job(job_id=(str(event.channel_id) + '_map'))
-            await unsub_map.send('已取消订阅地图轮换')
-    except BaseException as err:
-        await unsub_map.send('取消订阅地图轮换失败: {}'.format(err))
+        await unsub_map.send('已取消订阅地图轮换。')
+    except Exception as err:
+        await unsub_map.send(f'取消订阅地图轮换失败。\n{err}')
 
 # 订阅制造轮换
 @sub_craft.handle()
@@ -215,9 +215,9 @@ async def subcraft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEv
             await sub_craft.send('已订阅制造轮换')
         elif isinstance(event, GuildMessageEvent):
             scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.channel_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
-            await sub_craft.send('已订阅制造轮换')
-    except BaseException as err:
-        await sub_craft.send('订阅制造轮换失败: {}'.format(err))
+        await sub_craft.send('已订阅制造轮换。')
+    except Exception as err:
+        await sub_craft.send(f'订阅制造轮换失败。\n{err}')
 
 
 # 制造轮换定时任务
@@ -252,9 +252,9 @@ async def unsub_craft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessag
             await unsub_craft.send('已取消订阅制造轮换')
         elif isinstance(event, GuildMessageEvent):
             scheduler.remove_job(job_id=(str(event.channel_id) + '_craft'))
-            await unsub_craft.send('已取消订阅制造轮换')
-    except BaseException as err:
-        await unsub_craft.send('取消订阅制造轮换失败: {}'.format(err))
+        await unsub_craft.send(f'已取消订阅制造轮换。')
+    except Exception as err:
+        await unsub_craft.send(f'取消订阅制造轮换失败。\n{err}')
 
 # 异步查询
 async def api_query(service, payload):
@@ -262,12 +262,12 @@ async def api_query(service, payload):
         async with AsyncClient() as client:
             response = await client.get(api_url + service, params = payload, timeout = None)
         if response.status_code != 200 or response.text.find('Error') != -1:
-            data = '查询失败: API 错误: {}'.format(response.text)
+            data = f'查询失败: API 错误: {response.text}'
         else:
             data = process(service, response)
         return data
-    except BaseException as err:
-        data = '查询失败: 网络错误: {}'.format(err)
+    except Exception as err:
+        data = f'查询失败: 网络错误: {err}'
         return data
 
 # txt2img
