@@ -54,6 +54,16 @@ unsub_craft = on_command('unsubcraft', aliases = {'取消订阅制造'}, permiss
 bind_uid = on_command('bind', aliases = {'绑定'})
 unbind_uid = on_command('unbind', aliases = {'解绑'})
 
+# Bot 连接
+@get_driver().on_bot_connect
+async def bot_connect():
+    await sql().on_start()
+    await job().on_start()
+
+# Bot 断开
+@get_driver().on_bot_disconnect
+async def bot_disconnect():
+    await sql().on_close()
 
 # 玩家名称查询
 @player_statistics.handle()
