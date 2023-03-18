@@ -194,10 +194,11 @@ async def submap(bot_id, group_id, guild_id, channel_id):
 async def unsub_map_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
         if isinstance(event, GroupMessageEvent):
-            scheduler.remove_job(job_id=(str(event.group_id) + '_map'))
-            await unsub_map.send('已取消订阅地图轮换')
+            id = str(event.group_id) + '_map'
         elif isinstance(event, GuildMessageEvent):
-            scheduler.remove_job(job_id=(str(event.channel_id) + '_map'))
+            id = str(event.channel_id) + '_map'
+        await job().remove(id)
+        await sql().delsub(event, 'maprotation')
         await unsub_map.send('已取消订阅地图轮换。')
     except Exception as err:
         await unsub_map.send(f'取消订阅地图轮换失败。\n{err}')
