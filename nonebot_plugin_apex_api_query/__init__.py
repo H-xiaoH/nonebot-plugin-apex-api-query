@@ -207,11 +207,15 @@ async def unsub_map_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageE
 @sub_craft.handle()
 async def subcraft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
+        hour = 2
+        bot_id = bot.self_id
         if isinstance(event, GroupMessageEvent):
-            scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.group_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
-            await sub_craft.send('已订阅制造轮换')
+            id = str(event.group_id) + '_craft'
+            await job().add(subcraft, id, hour, bot_id, group_id = event.group_id)
         elif isinstance(event, GuildMessageEvent):
-            scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.channel_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
+            id = str(event.channel_id) + '_craft'
+            await job().add(subcraft, id, hour, bot_id, guild_id = event.guild_id, channel_id = event.channel_id)
+        await sql().addsub(event, bot_id, 'crafting')
         await sub_craft.send('已订阅制造轮换。')
     except Exception as err:
         await sub_craft.send(f'订阅制造轮换失败。\n{err}')
