@@ -78,7 +78,6 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 |:-----:|:----:|:----:|:----:|:----:|
 | 玩家 [玩家名称] | 无 | 否 | 私聊/群聊/频道 | 根据玩家名称查询信息 (暂仅支持查询 PC 平台玩家信息) |
 | UID [玩家UID] | 无 | 否 | 私聊/群聊/频道 | 根据玩家 UID 查询信息 (暂仅支持查询 PC 平台玩家信息) |
-| 自查 | 无 | 否 | 私聊/群聊/频道 | 根据玩家已绑定的 UID 自动查询玩家信息 |
 | 地图 | 无 | 否 | 私聊/群聊/频道 | 查询地图轮换 |
 | 猎杀 | 无 | 否 | 私聊/群聊/频道 | 查询各平台顶尖猎杀者信息 |
 | 制造 | 无 | 否 | 私聊/群聊/频道 | 查询复制器轮换 |
@@ -87,20 +86,18 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 | 取消订阅地图 | 管理员 | 否 | 群聊/频道 | 取消每整点查询地图轮换 |
 | 订阅制造 | 管理员 | 否 | 群聊/频道 | 每日 2 时查询复制器轮换 |
 | 取消订阅制造 | 管理员 | 否 | 群聊/频道 | 取消每日 2 时查询复制器轮换 |
-| 绑定 [玩家 UID] | 无 | 否 | 私聊/群聊/频道 | 将 UID 与 QQ 账号绑定 (群聊 与 频道 信息不互通) |
-| 解绑 | 无 | 否 | 私聊/群聊/频道 | 将 UID 与 QQ 账号解除绑定 (群聊 与 频道 信息不互通) |
 
 ## 📄 ToDo
 
-如您有想要的功能，请提交 [Issues](https://github.com/H-xiaoH/nonebot-plugin-apex-api-query/issues) 。
+玩家 ID 与 QQ 账号绑定。
+
+存储群/频道订阅信息。
 
 ## 🌸 致谢
 
 - [@nonebot](https://github.com/nonebot) 强大的 [NoneBot2 机器人框架](https://github.com/nonebot/nonebot2)。
 
 - [@nonebot](https://github.com/nonebot) 订阅功能基于 [APScheduler 定时任务插件](https://github.com/nonebot/plugin-apscheduler)。
-
-- [@nonebot](https://github.com/nonebot) 本地数据存储功能基于 [本地数据存储](https://github.com/nonebot/plugin-localstore)
 
 - [@A-kirami](https://github.com/A-kirami) 使用其 NoneBot Plugin [README 模板](https://github.com/A-kirami/nonebot-plugin-template)。
 
