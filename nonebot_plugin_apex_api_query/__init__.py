@@ -73,6 +73,9 @@ async def bot_disconnect():
 # 玩家名称查询
 @player_statistics.handle()
 async def player_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
+    if not player_name:
+        await player_statistics.send('用法: /玩家 [玩家名称]')
+        return
     service = 'bridge'
     payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
@@ -86,6 +89,12 @@ async def player_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEv
 # 玩家 UID 查询
 @uid_statistics.handle()
 async def uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
+    if not player_name:
+        if await sql().check_uid(event.user_id):
+            player_name = await sql().check_uid(event.user_id)
+        else:
+            await player_statistics.send('用法: /UID [玩家 UID]')
+            return
     service = 'bridge'
     payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
     await uid_statistics.send('正在查询: UID {}'.format(player_name))
