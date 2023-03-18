@@ -81,7 +81,7 @@ async def player_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEv
     await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
     response = await api_query(service, payload)
     if api_t2i:
-        msg = t2i(service, response)
+        msg = await t2i(service, response)
     else:
         msg = response
     await player_statistics.send(msg)
@@ -100,7 +100,7 @@ async def uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent
     await uid_statistics.send('正在查询: UID {}'.format(player_name))
     response = await api_query(service, payload)
     if api_t2i:
-        msg = t2i(service, response)
+        msg = await t2i(service, response)
     else:
         msg = response
     await uid_statistics.send(msg)
@@ -113,7 +113,7 @@ async def map_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent
     await map_protation.send('正在查询: 地图轮换')
     response = await api_query(service, payload)
     if api_t2i:
-        msg = t2i(service, response)
+        msg = await t2i(service, response)
     else:
         msg = response
     await map_protation.send(msg)
@@ -126,7 +126,7 @@ async def predator_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessage
     await predator.send('正在查询: 顶尖猎杀者')
     response = await api_query(service, payload)
     if api_t2i:
-        msg = t2i(service, response)
+        msg = await t2i(service, response)
     else:
         msg = response
     await predator.send(msg)
@@ -139,7 +139,7 @@ async def crafting_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessage
     await crafting_rotation.send('正在查询: 制造轮换')
     response = await api_query(service, payload)
     if api_t2i:
-        msg = t2i(service, response)
+        msg = await t2i(service, response)
     else:
         msg = response
     await crafting_rotation.send(msg)
@@ -271,7 +271,7 @@ async def api_query(service, payload):
         return data
 
 # txt2img
-def t2i(service, response):
+async def t2i(service, response):
     title = convert(service)
     font_size = 32
     text = response
