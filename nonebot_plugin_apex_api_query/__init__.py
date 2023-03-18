@@ -271,6 +271,35 @@ def t2i(service, response):
     msg = MessageSegment.image(pic)
     return msg
 
+# 绑定 UID
+@bind_uid.handle()
+async def bind_uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], uid: Message = CommandArg()):
+    if uid:
+        try:
+            if isinstance(event, GuildMessageEvent):
+                await sql().adduid(event, uid)
+                await bind_uid.send(f'已将 UID {uid} 绑定至 频道用户 {event.sender.nickname} 。')
+            else:
+                await sql().adduid(event, uid)
+                await bind_uid.send(f'已将 UID {uid} 绑定至 QQ {event.user_id} 。')
+        except Exception as err:
+            await bind_uid.send(f'绑定失败。\n{err}')
+    else: 
+        await bind_uid.send('用法: /绑定 [玩家 UID]')
+
+# 解绑 UID
+@unbind_uid.handle()
+async def unbind_uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+    try:
+        if isinstance(event, GuildMessageEvent):
+            await sql().deluid(event)
+            await unbind_uid.send(f'已将 频道用户 {event.user_id} 解绑。')
+        else:
+            await sql().deluid(event)
+            await unbind_uid.send(f'已将 QQ {event.user_id} 解绑')
+    except Exception as err:
+        await unbind_uid.send(f'解绑失败。\n{err}')
+
 # 数据库操作
 class sql:
 
