@@ -337,6 +337,36 @@ class sql:
         cursor = self.c.execute('SELECT * FROM "SUB"')
         return cursor.fetchall()
 
+# 定时任务操作
+class job:
+
+    # 添加定时任务
+    async def add(self, func, id, hour, bot_id, group_id = None, guild_id = None, channel_id = None):
+        scheduler.add_job(func=func, trigger='cron', id=id, hour=hour, minute=1, kwargs={'bot_id': bot_id, 'group_id': group_id, 'guild_id': guild_id, 'channel_id': channel_id})
+
+    # 删除定时任务
+    async def remove(self, id):
+        scheduler.remove_job(job_id=id)
+    
+    # 自动添加定时任务
+    async def on_start(self):
+        cursor = await sql().get_sub()
+        for row in cursor:
+            ID = row[0]
+            Guild_ID = row[1]
+            Craft = bool(row[2])
+            Map = bool(row[3])
+            Bot_ID = row[4]
+            if Craft:
+                if Guild_ID:
+                    await job().add(func=subcraft, id=(ID + '_craft'), hour=2, bot_id=Bot_ID, guild_id=Guild_ID, channel_id=ID)
+                elif not Guild_ID:
+                    await job().add(func=subcraft, id=(ID + '_craft'), hour=2, bot_id=Bot_ID, group_id=ID)
+            if Map:
+                if Guild_ID:
+                    await job().add(func=submap, id=(ID + '_map'), hour=None, bot_id=Bot_ID, guild_id=Guild_ID, channel_id=ID)
+                elif not Guild_ID:
+                    await job().add(func=submap, id=(ID + '_map'), hour=None, bot_id=Bot_ID, group_id=ID)
 
 # 处理获取信息
 def process(service, response):
