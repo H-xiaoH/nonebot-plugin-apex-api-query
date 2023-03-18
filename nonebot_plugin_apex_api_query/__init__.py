@@ -67,7 +67,7 @@ async def bot_disconnect():
 
 # 玩家名称查询
 @player_statistics.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
+async def player_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
     service = 'bridge'
     payload = {'auth': api_key, 'player': str(player_name), 'platform': 'PC'}
     await player_statistics.send('正在查询: 玩家 {}'.format(player_name))
@@ -80,7 +80,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, Guild
 
 # 玩家 UID 查询
 @uid_statistics.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
+async def uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
     service = 'bridge'
     payload = {'auth': api_key, 'uid': str(player_name), 'platform': 'PC'}
     await uid_statistics.send('正在查询: UID {}'.format(player_name))
@@ -93,7 +93,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, Guild
 
 # 地图轮换查询
 @map_protation.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def map_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
     service = 'maprotation'
     payload = {'auth': api_key, 'version': '2'}
     await map_protation.send('正在查询: 地图轮换')
@@ -106,7 +106,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, Guild
 
 # 顶尖猎杀者查询
 @predator.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def predator_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
     service = 'predator'
     payload = {'auth': api_key}
     await predator.send('正在查询: 顶尖猎杀者')
@@ -119,7 +119,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, Guild
 
 # 制造轮换查询
 @crafting_rotation.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def crafting_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
     service = 'crafting'
     payload = {'auth': api_key}
     await crafting_rotation.send('正在查询: 制造轮换')
@@ -132,7 +132,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, Guild
 
 # 服务器状态查询
 @servers.handle()
-async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def servers_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
     service = 'servers'
     payload = {'auth': api_key}
     await servers.send('正在查询: 服务器状态')
@@ -145,7 +145,7 @@ async def _(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, Guild
 
 # 订阅地图轮换
 @sub_map.handle()
-async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
+async def submap_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
         if isinstance(event, GroupMessageEvent):
             scheduler.add_job(func=submap, trigger='cron', id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
@@ -181,7 +181,7 @@ async def submap(bot, event, api_t2i):
 
 # 取消订阅地图轮换
 @unsub_map.handle()
-async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
+async def unsub_map_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
         if isinstance(event, GroupMessageEvent):
             scheduler.remove_job(job_id=(str(event.group_id) + '_map'))
@@ -194,7 +194,7 @@ async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
 
 # 订阅制造轮换
 @sub_craft.handle()
-async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
+async def subcraft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
         if isinstance(event, GroupMessageEvent):
             scheduler.add_job(func=subcraft, trigger='cron', id=(str(event.group_id) + '_craft'), hour=2, minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
@@ -231,7 +231,7 @@ async def subcraft(bot, event, api_t2i):
 
 # 取消订阅制造轮换
 @unsub_craft.handle()
-async def _(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
+async def unsub_craft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
         if isinstance(event, GroupMessageEvent):
             scheduler.remove_job(job_id=(str(event.group_id) + '_craft'))
