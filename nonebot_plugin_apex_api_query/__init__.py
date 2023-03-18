@@ -241,10 +241,11 @@ async def subcraft(bot_id, group_id, guild_id, channel_id):
 async def unsub_craft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
         if isinstance(event, GroupMessageEvent):
-            scheduler.remove_job(job_id=(str(event.group_id) + '_craft'))
-            await unsub_craft.send('已取消订阅制造轮换')
+            id = str(event.group_id) + '_craft'
         elif isinstance(event, GuildMessageEvent):
-            scheduler.remove_job(job_id=(str(event.channel_id) + '_craft'))
+            id = str(event.channel_id) + "_craft"
+        await job().remove(id)
+        await sql().delsub(event, 'crafting')
         await unsub_craft.send(f'已取消订阅制造轮换。')
     except Exception as err:
         await unsub_craft.send(f'取消订阅制造轮换失败。\n{err}')
