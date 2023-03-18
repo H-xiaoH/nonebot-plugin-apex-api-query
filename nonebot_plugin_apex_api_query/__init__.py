@@ -222,27 +222,19 @@ async def subcraft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEv
 
 
 # 制造轮换定时任务
-async def subcraft(bot, event, api_t2i):
+async def subcraft(bot_id, group_id, guild_id, channel_id):
+    bot = get_bot(bot_id)
     service = 'crafting'
     payload = {'auth': api_key}
-    if isinstance(event, GroupMessageEvent):
-        await bot.send_group_msg(group_id=event.group_id, message='正在查询: 制造轮换')
-    elif isinstance(event, GuildMessageEvent):
-        await bot.send_guild_channel_msg(guild_id=event.guild_id, channel_id=event.channel_id, message='正在查询: 制造轮换')
     response = await api_query(service, payload)
     if api_t2i:
-        title = '制造轮换'
-        font_size = 32
-        text = response
-        Txt2Img().set_font_size(font_size)
-        pic = Txt2Img().draw(title, text)
-        msg = MessageSegment.image(pic)
+        msg = await t2i(service, response)
     else:
         msg = response
-    if isinstance(event, GroupMessageEvent):
-        await bot.send_group_msg(group_id=event.group_id, message=msg)
-    elif isinstance(event, GuildMessageEvent):
-        await bot.send_guild_channel_msg(guild_id=event.guild_id, channel_id=event.channel_id, message=msg)
+    if group_id:
+        await bot.send_group_msg(group_id = group_id, message = msg)
+    elif channel_id:
+        await bot.send_guild_channel_msg(guild_id = guild_id, channel_id = channel_id, message = msg)
 
 # 取消订阅制造轮换
 @unsub_craft.handle()
