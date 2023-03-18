@@ -403,7 +403,7 @@ def process(service, response):
             '当前地图: {}\n'
             '下个地图: {}\n'
             '剩余时间: {}\n\n'
-            '限时:\n'
+            '混录带:\n'
             '当前地图: {}\n'
             '下个地图: {}\n'
             '剩余时间: {}'
@@ -610,6 +610,7 @@ def convert(name):
         'Barometer': '气压计',
         'Wall': '高墙',
         'Siphon': '岩浆汲取器',
+        'Fragment': '碎片东部',
         'Unknown': '未知',
         'None': '无',
         # Barrels
