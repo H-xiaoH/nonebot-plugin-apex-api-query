@@ -41,16 +41,19 @@ api_url = plugin_config.apex_api_url
 api_t2i = plugin_config.apex_api_t2i
 
 # 创建事件响应器
-player_statistics = on_command('bridge', aliases= {'玩家'})
-uid_statistics = on_command('uid', aliases={'UID'})
-map_protation = on_command('maprotation', aliases={'地图'})
-predator = on_command('predator', aliases={'猎杀'})
-crafting_rotation = on_command('crafting', aliases={'制造'})
-servers = on_command('servers', aliases={'服务'})
-sub_map = on_command('submap', aliases={'订阅地图'}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
-unsub_map = on_command('unsubmap', aliases={'取消订阅地图'}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
-sub_craft = on_command('subcraft', aliases={'订阅制造'}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
-unsub_craft = on_command('unsubcraft', aliases={'取消订阅制造'}, permission=SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+player_statistics = on_command('bridge', aliases = {'玩家'})
+uid_statistics = on_command('uid', aliases = {'UID', '自查'})
+map_protation = on_command('maprotation', aliases = {'地图'})
+predator = on_command('predator', aliases = {'猎杀'})
+crafting_rotation = on_command('crafting', aliases = {'制造'})
+servers = on_command('servers', aliases = {'服务'})
+sub_map = on_command('submap', aliases = {'订阅地图'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+unsub_map = on_command('unsubmap', aliases = {'取消订阅地图'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+sub_craft = on_command('subcraft', aliases = {'订阅制造'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+unsub_craft = on_command('unsubcraft', aliases = {'取消订阅制造'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+bind_uid = on_command('bind', aliases = {'绑定'})
+unbind_uid = on_command('unbind', aliases = {'解绑'})
+
 
 # 玩家名称查询
 @player_statistics.handle()
