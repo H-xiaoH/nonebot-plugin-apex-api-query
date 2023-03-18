@@ -161,11 +161,15 @@ async def servers_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageE
 @sub_map.handle()
 async def submap_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
     try:
+        hour = None
+        bot_id = bot.self_id
         if isinstance(event, GroupMessageEvent):
-            scheduler.add_job(func=submap, trigger='cron', id=(str(event.group_id) + '_map'), minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
-            await sub_map.send('已订阅地图轮换')
+            id = str(event.group_id) + '_map'
+            await job().add(submap, id, hour, bot_id, group_id = event.group_id)
         elif isinstance(event, GuildMessageEvent):
-            scheduler.add_job(func=submap, trigger='cron', id=(str(event.channel_id) + '_map'), minute=1, kwargs={'bot': bot, 'event': event, 'api_t2i': api_t2i})
+            id = str(event.channel_id) + '_map'
+            await job().add(submap, id, hour, bot_id, guild_id = event.guild_id, channel_id = event.channel_id)
+        await sql().addsub(event, bot_id, 'maprotation')
         await sub_map.send('已订阅地图轮换。')
     except Exception as err:
         await sub_map.send(f'订阅地图轮换失败。\n{err}')
