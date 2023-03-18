@@ -175,27 +175,19 @@ async def submap_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEven
         await sub_map.send(f'订阅地图轮换失败。\n{err}')
 
 # 地图轮换定时任务
-async def submap(bot, event, api_t2i):
+async def submap(bot_id, group_id, guild_id, channel_id):
+    bot = get_bot(bot_id)
     service = 'maprotation'
     payload = {'auth': api_key, 'version': '2'}
-    if isinstance(event, GroupMessageEvent):
-        await bot.send_group_msg(group_id=event.group_id, message='正在查询: 制造轮换')
-    elif isinstance(event, GuildMessageEvent):
-        await bot.send_guild_channel_msg(guild_id=event.guild_id, channel_id=event.channel_id, message='正在查询: 制造轮换')
     response = await api_query(service, payload)
     if api_t2i:
-        title = '地图轮换'
-        font_size = 32
-        text = response
-        Txt2Img().set_font_size(font_size)
-        pic = Txt2Img().draw(title, text)
-        msg = MessageSegment.image(pic)
+        msg = await t2i(service, response)
     else:
         msg = response
-    if isinstance(event, GroupMessageEvent):
-        await bot.send_group_msg(group_id=event.group_id, message=msg)
-    elif isinstance(event, GuildMessageEvent):
-        await bot.send_guild_channel_msg(guild_id=event.guild_id, channel_id=event.channel_id, message=msg)
+    if group_id:
+        await bot.send_group_msg(group_id = group_id, message = msg)
+    elif channel_id:
+        await bot.send_guild_channel_msg(guild_id = guild_id, channel_id = channel_id, message = msg)
 
 # 取消订阅地图轮换
 @unsub_map.handle()
