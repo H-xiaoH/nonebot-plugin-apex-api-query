@@ -1,4 +1,4 @@
-from nonebot import on_command, get_driver, require
+from nonebot import get_bot, on_command, get_driver, require
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, PrivateMessageEvent, GroupMessageEvent, GROUP_ADMIN, GROUP_OWNER
 from nonebot_plugin_guild_patch import GuildMessageEvent, GUILD_ADMIN, GUILD_OWNER, GUILD_SUPERUSER
 from nonebot.params import CommandArg
