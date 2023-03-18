@@ -4,11 +4,15 @@ from nonebot_plugin_guild_patch import GuildMessageEvent, GUILD_ADMIN, GUILD_OWN
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from nonebot.permission import SUPERUSER
+import sqlite3
 
 require('nonebot_plugin_apscheduler')
+require("nonebot_plugin_localstore")
 
 from nonebot_plugin_apscheduler import scheduler
+import nonebot_plugin_localstore as store
 from nonebot_plugin_txt2img import Txt2Img
+from pathlib import Path
 from httpx import AsyncClient
 from typing import Union
 from .config import Config
@@ -39,6 +43,7 @@ plugin_config = Config.parse_obj(get_driver().config)
 api_key = plugin_config.apex_api_key
 api_url = plugin_config.apex_api_url
 api_t2i = plugin_config.apex_api_t2i
+plugin_data_file: Path = store.get_data_file("nonebot_plugin_apex_api_query", "database.db")
 
 # 创建事件响应器
 player_statistics = on_command('bridge', aliases = {'玩家'})
@@ -265,6 +270,72 @@ def t2i(service, response):
     pic = Txt2Img().draw(title, text)
     msg = MessageSegment.image(pic)
     return msg
+
+# 数据库操作
+class sql:
+
+    # 连接数据库
+    conn = sqlite3.connect(plugin_data_file)
+    c = conn.cursor()
+
+    # 启动时创建数据库
+    async def on_start(self):
+        self.c.execute('CREATE TABLE IF NOT EXISTS "ID" ("QQ" TEXT, "EA" TEXT, PRIMARY KEY ("QQ"))')
+        self.c.execute('CREATE TABLE IF NOT EXISTS "SUB" ("ID" TEXT, "Guild_ID" TEXT, "Craft" INTEGER, "Map" INTEGER, "Bot_ID" TEXT NOT NULL, PRIMARY KEY ("ID"))')
+        self.conn.commit()
+
+    # 关闭时关闭数据库
+    async def on_close(self):
+        self.conn.close()
+
+    # 添加绑定信息
+    async def adduid(self, event, uid):
+        self.c.execute(f'INSERT INTO "ID" ("QQ", "EA") VALUES ("{event.user_id}", "{uid}") ON CONFLICT ("QQ") DO UPDATE SET "EA" = "{uid}"')
+        self.conn.commit()
+
+    # 删除绑定信息
+    async def deluid(self, event):
+        self.c.execute(f'DELETE FROM "ID" WHERE "QQ" = "{event.user_id}"')
+        self.conn.commit()
+
+    # 添加订阅信息
+    async def addsub(self, event, bot_id, service):
+        if isinstance(event, GroupMessageEvent):
+            if service == 'maprotation':
+                self.c.execute(f'INSERT INTO "SUB" ("ID", "Map", "Bot_ID") VALUES ("{event.group_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Map" = 1')
+            elif service == 'crafting':
+                self.c.execute(f'INSERT INTO "SUB" ("ID", "Craft", "Bot_ID") VALUES ("{event.group_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Craft" = 1')
+        elif isinstance(event, GuildMessageEvent):
+            if service == 'maprotation':
+                self.c.execute(f'INSERT INTO "SUB" ("ID", "Guild_ID", "Map", "Bot_ID") VALUES ("{event.channel_id}", "{event.guild_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Map" = 1')
+            elif service == 'crafting':
+                self.c.execute(f'INSERT INTO "SUB" ("ID", "Guild_ID", "Craft", "Bot_ID") VALUES ("{event.channel_id}", "{event.guild_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Craft" = 1')
+        self.c.execute
+        self.conn.commit()
+
+    # 修改订阅信息
+    async def delsub(self, event, service):
+        if isinstance(event, GroupMessageEvent):
+            if service == 'maprotation':
+                self.c.execute(f'UPDATE "SUB" SET "Map" = 0 WHERE "ID" = "{event.group_id}"')
+            elif service == 'crafting':
+                self.c.execute(f'UPDATE "SUB" SET "Craft" = 0 WHERE "ID" = "{event.group_id}"')
+        elif isinstance(event, GuildMessageEvent):
+            if service == 'maprotation':
+                self.c.execute(f'UPDATE "SUB" SET "Map" = 0 WHERE "ID" = "{event.channel_id}"')
+            elif service == 'crafting':
+                self.c.execute(f'UPDATE "SUB" SET "Craft" = 0 WHERE "ID" = "{event.channel_id}"')
+        self.conn.commit()
+
+    # 查询 UID
+    async def check_uid(self, user_id):
+        cursor = self.c.execute(f'SELECT "QQ", "EA" FROM "ID" WHERE "QQ" = "{user_id}"')
+        return cursor.fetchone()[1]
+
+    # 查询订阅信息
+    async def get_sub(self):
+        cursor = self.c.execute('SELECT * FROM "SUB"')
+        return cursor.fetchall()
 
 
 # 处理获取信息
