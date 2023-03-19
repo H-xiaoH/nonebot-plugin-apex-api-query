@@ -152,7 +152,7 @@ async def servers_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageE
     await servers.send('正在查询: 服务器状态')
     response = await api_query(service, payload)
     if api_t2i:
-        msg = t2i(service, response)
+        msg = await t2i(service, response)
     else:
         msg = response
     await servers.send(msg)
