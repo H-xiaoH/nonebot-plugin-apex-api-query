@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-apex-api-query"
-version = "23.3.18"
+version = "23.3.19"
 description = "基于 NoneBot2 的 Apex Legends API 查询插件"
 license = "MIT"
 authors = ["HxiaoH <412454922@qq.com>"]
