@@ -21,9 +21,9 @@ from nonebot_plugin_guild_patch import GuildMessageEvent, GUILD_ADMIN, GUILD_OWN
 
 # 插件元数据
 __plugin_meta__ = PluginMetadata(
-    'Apex API Query',
-    'Apex Legends API 查询插件',
-    '''
+    name = 'Apex API Query',
+    description = 'Apex Legends API 查询插件',
+    usage = '''
     `/bridge [玩家名称]` 、`/玩家 [玩家名称]` - 根据玩家名称查询玩家信息 (暂仅支持查询 PC 平台玩家信息), 
     `/uid [玩家 UID]`、`/UID [玩家 UID]` - 根据玩家 UID 查询玩家信息 (暂仅支持查询 PC 平台玩家信息), 
     `/uid`、`/自查` - 根据玩家已绑定的 UID 自动查询玩家信息, 
@@ -37,7 +37,12 @@ __plugin_meta__ = PluginMetadata(
     `/unsubcraft`、`/取消订阅制造` - 取消订阅制造轮换 (仅 群聊/频道 可用), 
     `/bind [玩家 UID]`、`/绑定 [玩家 UID]` - 将 UID 与 QQ 账号绑定, 
     `/unbind`、`/解绑` - 将 UID 与 QQ 账号解除绑定.
-    '''
+    ''',
+    type = 'application',
+    homepage = 'https://github.com/H-xiaoH/nonebot-plugin-apex-api-query',
+    supported_adapters = {'~onebot.v11'},
+    config = Config,
+    extra = {'Author': 'HxiaoH'}
 )
 
 # 读取配置
