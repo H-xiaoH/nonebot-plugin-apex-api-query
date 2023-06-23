@@ -1,21 +1,23 @@
 from nonebot import get_bot, on_command, get_driver, require
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment, PrivateMessageEvent, GroupMessageEvent, GROUP_ADMIN, GROUP_OWNER
-from nonebot_plugin_guild_patch import GuildMessageEvent, GUILD_ADMIN, GUILD_OWNER, GUILD_SUPERUSER
 from nonebot.params import CommandArg
 from nonebot.plugin import PluginMetadata
 from nonebot.permission import SUPERUSER
-import sqlite3
-
-require('nonebot_plugin_apscheduler')
-require("nonebot_plugin_localstore")
-
-from nonebot_plugin_apscheduler import scheduler
-import nonebot_plugin_localstore as store
-from nonebot_plugin_txt2img import Txt2Img
 from pathlib import Path
 from httpx import AsyncClient
 from typing import Union
 from .config import Config
+import sqlite3
+
+require('nonebot_plugin_apscheduler')
+require('nonebot_plugin_localstore')
+require('nonebot_plugin_txt2img')
+require('nonebot_plugin_guild_patch')
+
+from nonebot_plugin_apscheduler import scheduler
+import nonebot_plugin_localstore as store
+from nonebot_plugin_txt2img import Txt2Img
+from nonebot_plugin_guild_patch import GuildMessageEvent, GUILD_ADMIN, GUILD_OWNER, GUILD_SUPERUSER
 
 # 插件元数据
 __plugin_meta__ = PluginMetadata(
