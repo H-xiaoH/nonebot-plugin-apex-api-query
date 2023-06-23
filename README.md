@@ -31,6 +31,10 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 
 由于 API 的问题，您只能在查询玩家信息时使用 EA 账户用户名并非 Steam 账户用户名。
 
+数据由 API 提供，本插件仅作 数据获取 和 内容转换 。
+
+如您遇到了 `OSError: cannot open resource` 错误，请检查 [#7](https://github.com/H-xiaoH/nonebot-plugin-apex-api-query/issues/7) 。
+
 ## 💿 安装
 
 <details>
@@ -89,6 +93,12 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 | 取消订阅制造 | 管理员 | 否 | 群聊/频道 | 取消每日 2 时查询复制器轮换 |
 | 绑定 [玩家 UID] | 无 | 否 | 私聊/群聊/频道 | 将 UID 与 QQ 账号绑定 (群聊 与 频道 信息不互通) |
 | 解绑 | 无 | 否 | 私聊/群聊/频道 | 将 UID 与 QQ 账号解除绑定 (群聊 与 频道 信息不互通) |
+
+## 🖼️ 效果图
+
+![Bridge](https://oss.hxiaoh.com/File/GitHub/Photos/nonebot-plugin-apex-api-query/Bridge.png)
+![MapRotation](https://oss.hxiaoh.com/File/GitHub/Photos/nonebot-plugin-apex-api-query/MapRotation.png)
+![Crafting](https://oss.hxiaoh.com/File/GitHub/Photos/nonebot-plugin-apex-api-query/Crafting.png)
 
 ## 📄 ToDo
 
