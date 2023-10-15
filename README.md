@@ -21,9 +21,14 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 
 </div>
 
+## 🚧 注意
+
+如果您使用的是 OneBot v11 协议, 请安装 v23.6.23 版本。
+在 v23.6.23 版本中，如您遇到了 `OSError: cannot open resource` 错误，请检查 [#7](https://github.com/H-xiaoH/nonebot-plugin-apex-api-query/issues/7) 。
+
 ## 📖 介绍
 
-基于 NoneBot2 且使用 OneBot V11 协议 的 [Apex Legends API](https://apexlegendsstatus.com/) 查询插件。
+基于 NoneBot2 且使用 RedProtocol 协议 的 [Apex Legends API](https://apexlegendsstatus.com/) 查询插件。
 
 您可以在 [此处](https://portal.apexlegendsapi.com/) 申请您自己的 API 密钥。
 申请密钥后重新在 [此页面](https://portal.apexlegendsapi.com/) 登录 API 密钥以测试密钥是否可用。
@@ -32,8 +37,6 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 由于 API 的问题，您只能在查询玩家信息时使用 EA 账户用户名并非 Steam 账户用户名。
 
 数据由 API 提供，本插件仅作 数据获取 和 内容转换 。
-
-如您遇到了 `OSError: cannot open resource` 错误，请检查 [#7](https://github.com/H-xiaoH/nonebot-plugin-apex-api-query/issues/7) 。
 
 ## 💿 安装
 
@@ -74,25 +77,14 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 |:-----:|:----:|:----:|:----:|
 | APEX_API_KEY | 是 | None | API 密钥 |
 | APEX_API_URL | 否 | https://api.mozambiquehe.re/ | API 链接地址 |
-| APEX_API_T2I | 否 | True | 文字转图片 |
 
 ## 🎉 使用
 ### 指令表
 | 指令 | 权限 | 需要@ | 范围 | 说明 |
 |:-----:|:----:|:----:|:----:|:----:|
-| 玩家 [玩家名称] | 无 | 否 | 私聊/群聊/频道 | 根据玩家名称查询信息 (暂仅支持查询 PC 平台玩家信息) |
-| UID [玩家UID] | 无 | 否 | 私聊/群聊/频道 | 根据玩家 UID 查询信息 (暂仅支持查询 PC 平台玩家信息) |
-| 自查 | 无 | 否 | 私聊/群聊/频道 | 根据玩家已绑定的 UID 自动查询玩家信息 |
-| 地图 | 无 | 否 | 私聊/群聊/频道 | 查询地图轮换 |
-| 猎杀 | 无 | 否 | 私聊/群聊/频道 | 查询各平台顶尖猎杀者信息 |
-| 制造 | 无 | 否 | 私聊/群聊/频道 | 查询复制器轮换 |
-| 服务 | 无 | 否 | 私聊/群聊/频道 | 查询服务器状态 |
-| 订阅地图 | 管理员 | 否 | 群聊/频道 | 每整点查询地图轮换 |
-| 取消订阅地图 | 管理员 | 否 | 群聊/频道 | 取消每整点查询地图轮换 |
-| 订阅制造 | 管理员 | 否 | 群聊/频道 | 每日 2 时查询复制器轮换 |
-| 取消订阅制造 | 管理员 | 否 | 群聊/频道 | 取消每日 2 时查询复制器轮换 |
-| 绑定 [玩家 UID] | 无 | 否 | 私聊/群聊/频道 | 将 UID 与 QQ 账号绑定 (群聊 与 频道 信息不互通) |
-| 解绑 | 无 | 否 | 私聊/群聊/频道 | 将 UID 与 QQ 账号解除绑定 (群聊 与 频道 信息不互通) |
+| 玩家 [玩家名称] | 无 | 否 | 私聊/群聊 | 根据提供的玩家名称查询玩家信息 (暂仅支持 PC 平台玩家) |
+| 地图 | 无 | 否 | 私聊/群聊 | 查询当前地图轮换信息 |
+| 制造 | 无 | 否 | 私聊/群聊 | 查询当前制造轮换信息 |
 
 ## 🖼️ 效果图
 
@@ -108,10 +100,10 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 
 - [@nonebot](https://github.com/nonebot) 强大的 [NoneBot2 机器人框架](https://github.com/nonebot/nonebot2)
 
-- [@nonebot](https://github.com/nonebot) 订阅功能基于 [APScheduler 定时任务插件](https://github.com/nonebot/plugin-apscheduler)
+- ~~[@nonebot](https://github.com/nonebot) 订阅功能基于 [APScheduler 定时任务插件](https://github.com/nonebot/plugin-apscheduler)~~
 
-- [@nonebot](https://github.com/nonebot) 本地数据存储功能基于 [本地数据存储](https://github.com/nonebot/plugin-localstore)
+- ~~[@nonebot](https://github.com/nonebot) 本地数据存储功能基于 [本地数据存储](https://github.com/nonebot/plugin-localstore)~~
 
 - [@A-kirami](https://github.com/A-kirami) 使用其 NoneBot Plugin [README 模板](https://github.com/A-kirami/nonebot-plugin-template)
 
-- [@mobyw](https://github.com/mobyw) 文字转图片功能源于 [轻量文字转图片插件](https://github.com/mobyw/nonebot-plugin-txt2img)
+- ~~[@mobyw](https://github.com/mobyw) 文字转图片功能源于 [轻量文字转图片插件](https://github.com/mobyw/nonebot-plugin-txt2img)~~
