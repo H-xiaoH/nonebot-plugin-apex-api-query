@@ -12,12 +12,10 @@ import sqlite3
 require('nonebot_plugin_apscheduler')
 require('nonebot_plugin_localstore')
 require('nonebot_plugin_txt2img')
-require('nonebot_plugin_guild_patch')
 
 from nonebot_plugin_apscheduler import scheduler
 import nonebot_plugin_localstore as store
 from nonebot_plugin_txt2img import Txt2Img
-from nonebot_plugin_guild_patch import GuildMessageEvent, GUILD_ADMIN, GUILD_OWNER, GUILD_SUPERUSER
 
 # 插件元数据
 __plugin_meta__ = PluginMetadata(
@@ -31,10 +29,10 @@ __plugin_meta__ = PluginMetadata(
     `/predator` 、 `/猎杀` - 查询顶尖猎杀者信息, 
     `/crafting` 、 `/制造` - 查询当前制造轮换, 
     `/servers`、`/服务` - 查看当前服务器状态, 
-    `/submap`、`/订阅地图` - 订阅地图轮换 (每整点查询) (仅 群聊/频道 可用), 
-    `/unsubmap`、`/取消订阅地图` - 取消订阅地图轮换 (仅 群聊/频道 可用), 
-    `/subcraft`、`/订阅制造` - 订阅制造轮换 (每日 2 时查询) (仅 群聊/频道 可用), 
-    `/unsubcraft`、`/取消订阅制造` - 取消订阅制造轮换 (仅 群聊/频道 可用), 
+    `/submap`、`/订阅地图` - 订阅地图轮换 (每整点查询) (仅群聊可用), 
+    `/unsubmap`、`/取消订阅地图` - 取消订阅地图轮换 (仅群聊可用), 
+    `/subcraft`、`/订阅制造` - 订阅制造轮换 (每日 2 时查询) (仅群聊可用), 
+    `/unsubcraft`、`/取消订阅制造` - 取消订阅制造轮换 (仅群聊可用), 
     `/bind [玩家 UID]`、`/绑定 [玩家 UID]` - 将 UID 与 QQ 账号绑定, 
     `/unbind`、`/解绑` - 将 UID 与 QQ 账号解除绑定.
     ''',
@@ -59,10 +57,10 @@ map_protation = on_command('maprotation', aliases = {'地图'})
 predator = on_command('predator', aliases = {'猎杀'})
 crafting_rotation = on_command('crafting', aliases = {'制造'})
 servers = on_command('servers', aliases = {'服务'})
-sub_map = on_command('submap', aliases = {'订阅地图'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
-unsub_map = on_command('unsubmap', aliases = {'取消订阅地图'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
-sub_craft = on_command('subcraft', aliases = {'订阅制造'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
-unsub_craft = on_command('unsubcraft', aliases = {'取消订阅制造'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER | GUILD_ADMIN | GUILD_OWNER | GUILD_SUPERUSER)
+sub_map = on_command('submap', aliases = {'订阅地图'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+unsub_map = on_command('unsubmap', aliases = {'取消订阅地图'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+sub_craft = on_command('subcraft', aliases = {'订阅制造'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
+unsub_craft = on_command('unsubcraft', aliases = {'取消订阅制造'}, permission = SUPERUSER | GROUP_ADMIN | GROUP_OWNER)
 bind_uid = on_command('bind', aliases = {'绑定'})
 unbind_uid = on_command('unbind', aliases = {'解绑'})
 
@@ -79,7 +77,7 @@ async def bot_disconnect():
 
 # 玩家名称查询
 @player_statistics.handle()
-async def player_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
+async def player_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], player_name: Message = CommandArg()):
     if not player_name:
         await player_statistics.send('用法: /玩家 [玩家名称]')
         return
@@ -95,7 +93,7 @@ async def player_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEv
 
 # 玩家 UID 查询
 @uid_statistics.handle()
-async def uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], player_name: Message = CommandArg()):
+async def uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], player_name: Message = CommandArg()):
     if not player_name:
         if await sql().check_uid(event.user_id):
             player_name = await sql().check_uid(event.user_id)
@@ -114,7 +112,7 @@ async def uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent
 
 # 地图轮换查询
 @map_protation.handle()
-async def map_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def map_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     service = 'maprotation'
     payload = {'auth': api_key, 'version': '2'}
     await map_protation.send('正在查询: 地图轮换')
@@ -127,7 +125,7 @@ async def map_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent
 
 # 顶尖猎杀者查询
 @predator.handle()
-async def predator_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def predator_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     service = 'predator'
     payload = {'auth': api_key}
     await predator.send('正在查询: 顶尖猎杀者')
@@ -140,7 +138,7 @@ async def predator_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessage
 
 # 制造轮换查询
 @crafting_rotation.handle()
-async def crafting_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def crafting_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     service = 'crafting'
     payload = {'auth': api_key}
     await crafting_rotation.send('正在查询: 制造轮换')
@@ -153,7 +151,7 @@ async def crafting_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessage
 
 # 服务器状态查询
 @servers.handle()
-async def servers_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def servers_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     service = 'servers'
     payload = {'auth': api_key}
     await servers.send('正在查询: 服务器状态')
@@ -166,7 +164,7 @@ async def servers_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageE
 
 # 订阅地图轮换
 @sub_map.handle()
-async def submap_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
+async def submap_func(bot: Bot, event: Union[GroupMessageEvent]):
     try:
         hour = None
         bot_id = bot.self_id
@@ -198,7 +196,7 @@ async def submap(bot_id, group_id, guild_id, channel_id):
 
 # 取消订阅地图轮换
 @unsub_map.handle()
-async def unsub_map_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
+async def unsub_map_func(bot: Bot, event: Union[GroupMessageEvent]):
     try:
         if isinstance(event, GroupMessageEvent):
             id = str(event.group_id) + '_map'
@@ -212,7 +210,7 @@ async def unsub_map_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageE
 
 # 订阅制造轮换
 @sub_craft.handle()
-async def subcraft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
+async def subcraft_func(bot: Bot, event: Union[GroupMessageEvent]):
     try:
         hour = 2
         bot_id = bot.self_id
@@ -245,7 +243,7 @@ async def subcraft(bot_id, group_id, guild_id, channel_id):
 
 # 取消订阅制造轮换
 @unsub_craft.handle()
-async def unsub_craft_func(bot: Bot, event: Union[GroupMessageEvent, GuildMessageEvent]):
+async def unsub_craft_func(bot: Bot, event: Union[GroupMessageEvent]):
     try:
         if isinstance(event, GroupMessageEvent):
             id = str(event.group_id) + '_craft'
@@ -283,13 +281,13 @@ async def t2i(service, response):
 
 # 绑定 UID
 @bind_uid.handle()
-async def bind_uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent], uid: Message = CommandArg()):
+async def bind_uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent], uid: Message = CommandArg()):
     if uid:
         try:
-            if isinstance(event, GuildMessageEvent):
-                await sql().adduid(event, uid)
-                await bind_uid.send(f'已将 UID {uid} 绑定至 频道用户 {event.sender.nickname} 。')
-            else:
+            # if isinstance(event, GuildMessageEvent):
+            #     await sql().adduid(event, uid)
+            #     await bind_uid.send(f'已将 UID {uid} 绑定至 频道用户 {event.sender.nickname} 。')
+            # else:
                 await sql().adduid(event, uid)
                 await bind_uid.send(f'已将 UID {uid} 绑定至 QQ {event.user_id} 。')
         except Exception as err:
@@ -299,12 +297,12 @@ async def bind_uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessage
 
 # 解绑 UID
 @unbind_uid.handle()
-async def unbind_uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent, GuildMessageEvent]):
+async def unbind_uid_func(bot: Bot, event: Union[PrivateMessageEvent, GroupMessageEvent]):
     try:
-        if isinstance(event, GuildMessageEvent):
-            await sql().deluid(event)
-            await unbind_uid.send(f'已将 频道用户 {event.user_id} 解绑。')
-        else:
+        # if isinstance(event, GuildMessageEvent):
+        #     await sql().deluid(event)
+        #     await unbind_uid.send(f'已将 频道用户 {event.user_id} 解绑。')
+        # else:
             await sql().deluid(event)
             await unbind_uid.send(f'已将 QQ {event.user_id} 解绑')
     except Exception as err:
@@ -344,11 +342,11 @@ class sql:
                 self.c.execute(f'INSERT INTO "SUB" ("ID", "Map", "Bot_ID") VALUES ("{event.group_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Map" = 1')
             elif service == 'crafting':
                 self.c.execute(f'INSERT INTO "SUB" ("ID", "Craft", "Bot_ID") VALUES ("{event.group_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Craft" = 1')
-        elif isinstance(event, GuildMessageEvent):
-            if service == 'maprotation':
-                self.c.execute(f'INSERT INTO "SUB" ("ID", "Guild_ID", "Map", "Bot_ID") VALUES ("{event.channel_id}", "{event.guild_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Map" = 1')
-            elif service == 'crafting':
-                self.c.execute(f'INSERT INTO "SUB" ("ID", "Guild_ID", "Craft", "Bot_ID") VALUES ("{event.channel_id}", "{event.guild_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Craft" = 1')
+        # elif isinstance(event, GuildMessageEvent):
+        #     if service == 'maprotation':
+        #         self.c.execute(f'INSERT INTO "SUB" ("ID", "Guild_ID", "Map", "Bot_ID") VALUES ("{event.channel_id}", "{event.guild_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Map" = 1')
+        #     elif service == 'crafting':
+        #         self.c.execute(f'INSERT INTO "SUB" ("ID", "Guild_ID", "Craft", "Bot_ID") VALUES ("{event.channel_id}", "{event.guild_id}", "1", "{bot_id}") ON CONFLICT ("ID") DO UPDATE SET "Craft" = 1')
         self.c.execute
         self.conn.commit()
 
@@ -359,11 +357,11 @@ class sql:
                 self.c.execute(f'UPDATE "SUB" SET "Map" = 0 WHERE "ID" = "{event.group_id}"')
             elif service == 'crafting':
                 self.c.execute(f'UPDATE "SUB" SET "Craft" = 0 WHERE "ID" = "{event.group_id}"')
-        elif isinstance(event, GuildMessageEvent):
-            if service == 'maprotation':
-                self.c.execute(f'UPDATE "SUB" SET "Map" = 0 WHERE "ID" = "{event.channel_id}"')
-            elif service == 'crafting':
-                self.c.execute(f'UPDATE "SUB" SET "Craft" = 0 WHERE "ID" = "{event.channel_id}"')
+        # elif isinstance(event, GuildMessageEvent):
+        #     if service == 'maprotation':
+        #         self.c.execute(f'UPDATE "SUB" SET "Map" = 0 WHERE "ID" = "{event.channel_id}"')
+        #     elif service == 'crafting':
+        #         self.c.execute(f'UPDATE "SUB" SET "Craft" = 0 WHERE "ID" = "{event.channel_id}"')
         self.conn.commit()
 
     # 查询 UID
