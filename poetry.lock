@@ -284,13 +284,13 @@ test = ["Cython (>=0.29.24,<0.30.0)"]
 
 [[package]]
 name = "httpx"
-version = "0.27.0"
+version = "0.26.0"
 description = "The next generation HTTP client."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "httpx-0.27.0-py3-none-any.whl", hash = "sha256:71d5465162c13681bff01ad59b2cc68dd838ea1f10e51574bac27103f00c91a5"},
-    {file = "httpx-0.27.0.tar.gz", hash = "sha256:a0cb88a46f32dc874e04ee956e4c2764aba2aa228f650b06788ba6bda2962ab5"},
+    {file = "httpx-0.26.0-py3-none-any.whl", hash = "sha256:8915f5a3627c4d47b73e8202457cb28f1266982d1159bd5779d86a80c0eab1cd"},
+    {file = "httpx-0.26.0.tar.gz", hash = "sha256:451b55c30d5185ea6b23c2c793abf9bb237d2a7dfb901ced6ff69ad37ec1dfaf"},
 ]
 
 [package.dependencies]
@@ -651,13 +651,13 @@ typing-extensions = ">=4.0.0,<5.0.0"
 
 [[package]]
 name = "nonebot-plugin-apscheduler"
-version = "0.5.0"
+version = "0.4.0"
 description = "APScheduler Support for NoneBot2"
 optional = false
-python-versions = "<4.0,>=3.9"
+python-versions = ">=3.8,<4.0"
 files = [
-    {file = "nonebot_plugin_apscheduler-0.5.0-py3-none-any.whl", hash = "sha256:8b99b5ee60c4bc195d4df2fd27dab3d6963691e3332f6cee31a06eb4277c307f"},
-    {file = "nonebot_plugin_apscheduler-0.5.0.tar.gz", hash = "sha256:6c0230e99765f275dc83d6639ff33bd6f71203fa10cd1b8a204b0f95530cda86"},
+    {file = "nonebot_plugin_apscheduler-0.4.0-py3-none-any.whl", hash = "sha256:f01bb418a5ecf9f04dcadbbc2ff5ba565a48177eb0a758c8c46b13048ac5680c"},
+    {file = "nonebot_plugin_apscheduler-0.4.0.tar.gz", hash = "sha256:ba91e68809a38e6dbe28906366d47f37f754ded360944b938cd5ac62029a0eb6"},
 ]
 
 [package.dependencies]
@@ -1537,4 +1537,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "91367871cc8232846f8a5ceee22f28aed6d167cf345106528ccffbb5eef31044"
+content-hash = "d0ffb99e1c4ad2fce28fbdfeef5afe07599972ec6e32a929ef41ac560447d898"
