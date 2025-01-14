@@ -1,6 +1,9 @@
 from pydantic import BaseModel
-from typing import Optional
+from nonebot.plugin import get_plugin_config
 
 class Config(BaseModel):
     """Plugin Config Here"""
-    APEX_API_KEY: Optional[str] = None
+    apex_api_key: str = ""
+    """Your API Key from https://portal.apexlegendsapi.com/"""
+
+config = get_plugin_config(Config)
