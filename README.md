@@ -1,39 +1,35 @@
 <div align="center">
-  <a href="https://v2.nonebot.dev/store"><img src="https://github.com/A-kirami/nonebot-plugin-template/blob/resources/nbp_logo.png" width="180" height="180" alt="NoneBotPluginLogo"></a>
-  <br>
-  <p><img src="https://github.com/A-kirami/nonebot-plugin-template/blob/resources/NoneBotPlugin.svg" width="240" alt="NoneBotPluginText"></p>
+  <a href="https://v2.nonebot.dev/store">
+    <img src="./docs/NoneBotPlugin.svg" width="300" alt="logo">
+  </a>
 </div>
 
 <div align="center">
 
-# nonebot-plugin-apex-api-query
+# NoneBot-Plugin-Apex-API-Query
 
 _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 
 
-<a href="./LICENSE">
-    <img src="https://img.shields.io/github/license/H-xiaoH/nonebot-plugin-apex-api-query.svg" alt="license">
+<a href="https://registry.nonebot.dev/plugin/nonebot-plugin-apex-api-query:nonebot_plugin_apex_api_query">
+  <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fnbbdg.lgc2333.top%2Fplugin%2Fnonebot-plugin-apex-api-query" alt="NoneBot Registry" />
 </a>
-<a href="https://pypi.python.org/pypi/nonebot-plugin-apex-api-query">
-    <img src="https://img.shields.io/pypi/v/nonebot-plugin-apex-api-query.svg" alt="pypi">
-</a>
-<img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="python">
 
 </div>
 
 ## 📖 介绍
 
-基于 NoneBot2 且使用 OneBot V11 协议 的 [Apex Legends API](https://apexlegendsstatus.com/) 查询插件。
+基于 NoneBot2 的 [Apex Legends API](https://apexlegendsstatus.com/) 查询插件。
 
 您可以在 [此处](https://portal.apexlegendsapi.com/) 申请您自己的 API 密钥。
+
 申请密钥后重新在 [此页面](https://portal.apexlegendsapi.com/) 登录 API 密钥以测试密钥是否可用。
+
 必须将此 API 密钥 [链接](https://portal.apexlegendsapi.com/discord-auth) 至您的 Discord 账户后您的 API 密钥才可用。
 
 由于 API 的问题，您只能在查询玩家信息时使用 EA 账户用户名并非 Steam 账户用户名。
 
 数据由 API 提供，本插件仅作 数据获取 和 内容转换 。
-
-如您遇到了 `OSError: cannot open resource` 错误，请检查 [#7](https://github.com/H-xiaoH/nonebot-plugin-apex-api-query/issues/7) 。
 
 ## 💿 安装
 
@@ -70,48 +66,34 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 
 在 nonebot2 项目的`.env`文件中添加下表中的必填配置
 
-| 配置项 | 必填 | 默认值 | 说明 |
-|:-----:|:----:|:----:|:----:|
-| APEX_API_KEY | 是 | None | API 密钥 |
-| APEX_API_URL | 否 | https://api.mozambiquehe.re/ | API 链接地址 |
-| APEX_API_T2I | 否 | True | 文字转图片 |
+```env
+APEX_API_KEY = "你的 API 密钥"
+```
 
 ## 🎉 使用
 ### 指令表
-| 指令 | 权限 | 需要@ | 范围 | 说明 |
-|:-----:|:----:|:----:|:----:|:----:|
-| 玩家 [玩家名称] | 无 | 否 | 私聊/群聊 | 根据玩家名称查询信息 (暂仅支持查询 PC 平台玩家信息) |
-| UID [玩家UID] | 无 | 否 | 私聊/群聊 | 根据玩家 UID 查询信息 (暂仅支持查询 PC 平台玩家信息) |
-| 自查 | 无 | 否 | 私聊/群聊 | 根据玩家已绑定的 UID 自动查询玩家信息 |
-| 地图 | 无 | 否 | 私聊/群聊 | 查询地图轮换 |
-| 猎杀 | 无 | 否 | 私聊/群聊 | 查询各平台顶尖猎杀者信息 |
-| 制造 | 无 | 否 | 私聊/群聊 | 查询复制器轮换 |
-| 服务 | 无 | 否 | 私聊/群聊 | 查询服务器状态 |
-| 订阅地图 | 管理员 | 否 | 群聊 | 每整点查询地图轮换 |
-| 取消订阅地图 | 管理员 | 否 | 群聊 | 取消每整点查询地图轮换 |
-| 订阅制造 | 管理员 | 否 | 群聊 | 每日 2 时查询复制器轮换 |
-| 取消订阅制造 | 管理员 | 否 | 群聊 | 取消每日 2 时查询复制器轮换 |
-| 绑定 [玩家 UID] | 无 | 否 | 私聊/群聊 | 将 UID 与 QQ 账号绑定 |
-| 解绑 | 无 | 否 | 私聊/群聊 | 将 UID 与 QQ 账号解除绑定 |
 
-## 🖼️ 效果图
+```shell
+apex [玩家名称] [平台] #根据玩家名称查询玩家信息
+apex [m|map|地图] #查询地图信息
+apex [s|server|服务器] #查询服务器状态
+apex [p|predator|顶猎] #查询顶猎分数
+```
 
-![Bridge](https://oss.hxiaoh.com/File/GitHub/Photos/nonebot-plugin-apex-api-query/Bridge.png)
-![MapRotation](https://oss.hxiaoh.com/File/GitHub/Photos/nonebot-plugin-apex-api-query/MapRotation.png)
-![Crafting](https://oss.hxiaoh.com/File/GitHub/Photos/nonebot-plugin-apex-api-query/Crafting.png)
-
-## 📄 ToDo
-
-如您有想要的功能，请提交 [Issues](https://github.com/H-xiaoH/nonebot-plugin-apex-api-query/issues) 。
-
-## 🌸 致谢
+## 💖 鸣谢
 
 - [@nonebot](https://github.com/nonebot) 强大的 [NoneBot2 机器人框架](https://github.com/nonebot/nonebot2)
 
-- [@nonebot](https://github.com/nonebot) 订阅功能基于 [APScheduler 定时任务插件](https://github.com/nonebot/plugin-apscheduler)
+## 📄 许可证
 
-- [@nonebot](https://github.com/nonebot) 本地数据存储功能基于 [本地数据存储](https://github.com/nonebot/plugin-localstore)
+本项目使用 [MIT](./LICENSE) 许可证开源
 
-- [@A-kirami](https://github.com/A-kirami) 使用其 NoneBot Plugin [README 模板](https://github.com/A-kirami/nonebot-plugin-template)
-
-- [@mobyw](https://github.com/mobyw) 文字转图片功能源于 [轻量文字转图片插件](https://github.com/mobyw/nonebot-plugin-txt2img)
+```text
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
