@@ -1,5 +1,3 @@
-from nonebot import logger
-from nonebot.adapters import Event
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 from nonebot_plugin_alconna import Alconna, Args, Option, on_alconna, CommandMeta
 from .config import Config
@@ -8,13 +6,13 @@ from . import data_source as ds
 
 # 插件元数据
 __plugin_meta__ = PluginMetadata(
-    name = "Apex API Query",
-    description = "Apex Legends API 查询插件",
-    usage = "/apex",
-    type = "application",
-    homepage = "https://github.com/H-xiaoH/nonebot-plugin-apex-api-query",
-    config = Config,
-    supported_adapters = inherit_supported_adapters(
+    name="Apex API Query",
+    description="Apex Legends API 查询插件",
+    usage="/apex",
+    type="application",
+    homepage="https://github.com/H-xiaoH/nonebot-plugin-apex-api-query",
+    config=Config,
+    supported_adapters=inherit_supported_adapters(
         "nonebot_plugin_alconna"
         ),
     extra = {
