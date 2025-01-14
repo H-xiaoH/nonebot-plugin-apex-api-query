@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 from typing import Optional
 
-class Config(BaseModel, extra=Extra.ignore):
-    apex_api_key: Optional[str] = None
-    apex_api_url: str = 'https://api.mozambiquehe.re/'
-    apex_api_t2i: bool = True
+class Config(BaseModel):
+    """Plugin Config Here"""
+    APEX_API_KEY: Optional[str] = None
