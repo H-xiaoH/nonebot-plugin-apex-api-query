@@ -1,25 +1,22 @@
-from nonebot import get_plugin_config, logger
 from typing import Optional
-from .config import Config
+from .config import config
 from .data import convert
 import httpx
 
 # 读取插件配置文件
-config = get_plugin_config(Config)
-
-APEX_API_KEY = config.APEX_API_KEY
-APEX_API_URL: str = "https://api.mozambiquehe.re"
+API_KEY = config.apex_api_key
+API_URL: str = "https://api.mozambiquehe.re"
 
 # 请求查询API
 async def query_apex_api(server: str, params: Optional[dict] = None):
     # 请求参数
-    payload = {"auth": APEX_API_KEY}
+    payload = {"auth": API_KEY}
     # 合并请求参数
     if params:
         payload.update(params)
     # 发送请求
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{APEX_API_URL}/{server}", params=payload, timeout=None)
+        response = await client.get(f"{API_URL}/{server}", params=payload, timeout=None)
         return response
 
 # 获取玩家数据
@@ -30,7 +27,6 @@ async def get_player_stats(player_name: str, platform: str = "PC"):
     
     # 处查API响应状态码
     if response.status_code != 200:
-        logger.error(f"Error: {response.text}")
         return response.text
 
     # 解析数据
@@ -85,7 +81,6 @@ async def get_map_rotation():
 
     # 检查API响应状态码
     if response.status_code != 200:
-        logger.error(f"Error: {response.text}")
         return response.text
 
     # 格式化地图轮换信息
@@ -118,9 +113,7 @@ async def get_server_status():
 
     # 检查响应状态码
     if response.status_code != 200:
-        logger.error(f"Error: {response.text}")
         return response.text
-    logger.info(response_data)
 
     # 定义部分及其对应的键
     sections = {
@@ -183,7 +176,6 @@ async def get_predator():
     
     # 检查响应状态码
     if response.status_code != 200:
-        logger.error(f"Error: {response.text}")
         return response.text
 
     # 解析数据
