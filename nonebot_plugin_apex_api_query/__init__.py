@@ -1,8 +1,10 @@
+from nonebot import require
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
-from nonebot_plugin_alconna import Alconna, Args, Option, on_alconna, CommandMeta
 from .config import Config
 from . import data_source as ds
 
+require("nonebot_plugin_alconna")
+from nonebot_plugin_alconna import Alconna, Args, CommandMeta, Option, on_alconna
 
 # 插件元数据
 __plugin_meta__ = PluginMetadata(
