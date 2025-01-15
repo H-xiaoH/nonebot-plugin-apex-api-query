@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-apex-api-query"
-version = "25.1.15"
+version = "25.1.16"
 description = ""
 authors = [
     {name = "H-xiaoH",email = "a412454922@gmail.com"}
