@@ -17,6 +17,8 @@ def convert(name):
         'Wall': '高墙',
         'Siphon': '岩浆汲取器',
         'Fragment': '碎片东部',
+        'E-District': '电力区域',
+        'The Core': '核心',
         'Unknown': '未知',
         'None': '无',
         # Barrels
