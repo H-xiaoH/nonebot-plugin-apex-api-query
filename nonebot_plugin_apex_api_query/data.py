@@ -6,7 +6,7 @@ TRANSLATIONS = {
         'Storm Point': '风暴点',
         'Broken Moon': '残月',
         'Encore': '再来一次',
-        'Habitat': '栖息地 4',
+        'Habitat': '栖息地',
         'Overflow': '熔岩流',
         'Phase runner': '相位穿梭器',
         'Party crasher': '派对破坏者',
@@ -18,6 +18,8 @@ TRANSLATIONS = {
         'Fragment': '碎片东部',
         'E-District': '电力区域',
         'The Core': '核心',
+        'Monument': '纪念碑',
+        'Thunderdome': '雷霆圆顶',
         'Unknown': '未知',
         'None': '无',
         # Barrels
@@ -74,7 +76,8 @@ TRANSLATIONS = {
         'Rare': '稀有',
         'Epic': '史诗',
         # Rank
-        'Unranked': '菜鸟',
+        'Unranked': '无段位',
+        'Rookie': '菜鸟',
         'Bronze': '青铜',
         'Silver': '白银',
         'Gold': '黄金',
