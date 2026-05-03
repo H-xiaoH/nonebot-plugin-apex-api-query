@@ -46,23 +46,19 @@ async def apex_player(player_name: str | None = None, platform: str = "PC"):
         await apex.finish("请输入玩家名称")
     elif platform not in ["PC", "PS4", "X1", "Switch"]:
         await apex.finish("平台参数错误，请输入 PC、PS4、X1 或 Switch")
-    msg = await apex.finish(str(await ds.get_player_stats(player_name, platform)))
-    await apex.finish(msg)
+    await apex.finish(await ds.get_player_stats(player_name, platform))
 
 # 处理地图轮换
 @apex.assign("map")
 async def apex_map():
-    msg = await apex.finish(str(await ds.get_map_rotation()))
-    await apex.finish(msg)
+    await apex.finish(await ds.get_map_rotation())
 
 # 处理服务器状态
 @apex.assign("server")
 async def apex_server():
-    msg = await apex.finish(str(await ds.get_server_status()))
-    await apex.finish(msg)
+    await apex.finish(await ds.get_server_status())
 
 # 处理猎杀者信息
 @apex.assign("predator")
 async def apex_predator():
-    msg = await apex.finish(str(await ds.get_predator()))
-    await apex.finish(msg)
+    await apex.finish(await ds.get_predator())
