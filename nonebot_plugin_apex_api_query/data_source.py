@@ -1,33 +1,44 @@
+import json
+import logging
 from typing import Optional
 from .config import config
 from .data import convert
 import httpx
 
-# 读取插件配置文件
-API_KEY = config.apex_api_key
+logger = logging.getLogger(__name__)
+
 API_URL: str = "https://api.mozambiquehe.re"
 
 # 请求查询API
 async def query_apex_api(server: str, params: Optional[dict] = None):
     # 请求参数
-    payload = {"auth": API_KEY}
+    payload = {"auth": config.apex_api_key}
     # 合并请求参数
     if params:
         payload.update(params)
     # 发送请求
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{API_URL}/{server}", params=payload, timeout=None)
+        response = await client.get(f"{API_URL}/{server}", params=payload, timeout=30)
         return response
 
 # 获取玩家数据
 async def get_player_stats(player_name: str, platform: str = "PC"):
     # 请求参数
-    response = await query_apex_api("bridge", {"player": player_name, "platform": platform})
-    response_data = response.json()
-    
-    # 处查API响应状态码
+    try:
+        response = await query_apex_api("bridge", {"player": player_name, "platform": platform})
+    except httpx.HTTPError as e:
+        logger.error(f"Failed to query player stats: {e}")
+        return f"查询失败: 网络请求错误"
+
     if response.status_code != 200:
+        logger.warning(f"Player stats API returned {response.status_code}: {response.text}")
         return response.text
+
+    try:
+        response_data = response.json()
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse player stats response: {e}")
+        return "查询失败: API 返回数据格式错误"
 
     # 解析数据
     global_data = response_data["global"]
@@ -76,12 +87,21 @@ async def get_player_stats(player_name: str, platform: str = "PC"):
 # 获取地图轮换信息
 async def get_map_rotation():
     # 查询API获取地图轮换信息
-    response = await query_apex_api("maprotation", {"version": "2"})
-    response_data = response.json()
+    try:
+        response = await query_apex_api("maprotation", {"version": "2"})
+    except httpx.HTTPError as e:
+        logger.error(f"Failed to query map rotation: {e}")
+        return "查询失败: 网络请求错误"
 
-    # 检查API响应状态码
     if response.status_code != 200:
+        logger.warning(f"Map rotation API returned {response.status_code}: {response.text}")
         return response.text
+
+    try:
+        response_data = response.json()
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse map rotation response: {e}")
+        return "查询失败: API 返回数据格式错误"
 
     # 格式化地图轮换信息
     def format_map_data(map_data, mode_name):
@@ -108,12 +128,21 @@ async def get_map_rotation():
 # 获取服务器状态
 async def get_server_status():
     # 查询API获取服务器状态
-    response = await query_apex_api("servers")
-    response_data = response.json()
+    try:
+        response = await query_apex_api("servers")
+    except httpx.HTTPError as e:
+        logger.error(f"Failed to query server status: {e}")
+        return "查询失败: 网络请求错误"
 
-    # 检查响应状态码
     if response.status_code != 200:
+        logger.warning(f"Server status API returned {response.status_code}: {response.text}")
         return response.text
+
+    try:
+        response_data = response.json()
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse server status response: {e}")
+        return "查询失败: API 返回数据格式错误"
 
     # 定义部分及其对应的键
     sections = {
@@ -171,12 +200,21 @@ async def get_server_status():
 
 # 查询猎杀数据
 async def get_predator():
-    response = await query_apex_api("predator")
-    response_data = response.json()
-    
-    # 检查响应状态码
+    try:
+        response = await query_apex_api("predator")
+    except httpx.HTTPError as e:
+        logger.error(f"Failed to query predator: {e}")
+        return "查询失败: 网络请求错误"
+
     if response.status_code != 200:
+        logger.warning(f"Predator API returned {response.status_code}: {response.text}")
         return response.text
+
+    try:
+        response_data = response.json()
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse predator response: {e}")
+        return "查询失败: API 返回数据格式错误"
 
     # 解析数据
     rp = response_data.get('RP', {})
