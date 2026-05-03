@@ -1,7 +1,7 @@
 [project]
 name = "nonebot-plugin-apex-api-query"
-version = "25.1.16"
-description = ""
+version = "26.5.3"
+description = "Apex Legends API 查询插件，支持玩家数据、地图轮换、服务器状态和顶猎分数查询"
 authors = [
     {name = "H-xiaoH",email = "a412454922@gmail.com"}
 ]
