@@ -1,6 +1,5 @@
-def convert(name):
-    names = {
-        # Map
+TRANSLATIONS = {
+    # Map
         'Kings Canyon': '诸王峡谷',
         'World\'s Edge': '世界尽头',
         'Olympus': '奥林匹斯',
@@ -182,4 +181,6 @@ def convert(name):
         'crafting': '制造轮换',
         'servers': '服务器状态'
     }
-    return names.get(name, name)
+
+def convert(name):
+    return TRANSLATIONS.get(name, name)
