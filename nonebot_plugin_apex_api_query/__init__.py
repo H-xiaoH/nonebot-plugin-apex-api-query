@@ -1,3 +1,5 @@
+from typing import Optional
+
 from nonebot import require
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 from .config import Config
@@ -41,12 +43,12 @@ apex = on_alconna(
 
 # 注册命令处理函数
 @apex.assign("$main")
-async def apex_player(player_name: str | None = None, platform: str = "PC"):
+async def apex_player(player_name: Optional[str] = None, platform: str = "PC"):
     if player_name is None:
         await apex.finish("请输入玩家名称")
-    elif platform not in ["PC", "PS4", "X1", "Switch"]:
+    elif platform.upper() not in ["PC", "PS4", "X1", "SWITCH"]:
         await apex.finish("平台参数错误，请输入 PC、PS4、X1 或 Switch")
-    await apex.finish(await ds.get_player_stats(player_name, platform))
+    await apex.finish(await ds.get_player_stats(player_name, platform.upper()))
 
 # 处理地图轮换
 @apex.assign("map")
