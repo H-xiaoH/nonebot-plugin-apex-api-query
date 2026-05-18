@@ -13,7 +13,7 @@ dependencies = [
     "nonebot-plugin-alconna (>=0.54.2)",
     "httpx (>=0.28.1)",
     "nonebot-plugin-orm (>=0.7.7)",
-    "sqlalchemy (>=2.0.0)",
+    "nonebot-plugin-localstore (>=0.1.0)",
 ]
 license = { text = "MIT" }
 
