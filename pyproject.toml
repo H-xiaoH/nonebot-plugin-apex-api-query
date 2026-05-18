@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-apex-api-query"
-version = "26.5.16"
+version = "26.5.19"
 description = "Apex Legends API 查询插件，支持玩家数据、地图轮换、服务器状态和顶猎分数查询"
 authors = [
     {name = "H-xiaoH",email = "a412454922@gmail.com"}
@@ -12,6 +12,8 @@ dependencies = [
     "nonebot-adapter-onebot (>=2.4.6)",
     "nonebot-plugin-alconna (>=0.54.2)",
     "httpx (>=0.28.1)",
+    "nonebot-plugin-orm (>=0.7.7)",
+    "sqlalchemy (>=2.0.0)",
 ]
 license = { text = "MIT" }
 
