@@ -8,12 +8,12 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.9,<4.0"
 dependencies = [
-    "nonebot2 (>=2.4.1)",
+    "nonebot2 (>=2.5.0)",
     "nonebot-adapter-onebot (>=2.4.6)",
-    "nonebot-plugin-alconna (>=0.54.2)",
+    "nonebot-plugin-alconna (>=0.62.0)",
     "httpx (>=0.28.1)",
-    "nonebot-plugin-orm (>=0.7.7)",
-    "nonebot-plugin-localstore (>=0.1.0)",
+    "nonebot-plugin-orm (>=0.8.3)",
+    "nonebot-plugin-localstore (>=0.7.4)",
 ]
 license = { text = "MIT" }
 
