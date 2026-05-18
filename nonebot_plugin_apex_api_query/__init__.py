@@ -7,8 +7,8 @@ from . import data_source as ds
 from . import storage
 from .config import Config
 
-require("nonebot_plugin_alconna")
 require("nonebot_plugin_orm")
+require("nonebot_plugin_alconna")
 from nonebot_plugin_alconna import Alconna, Args, CommandMeta, Option, on_alconna
 
 # 插件元数据
