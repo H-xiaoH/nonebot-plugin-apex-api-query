@@ -1,33 +1,68 @@
+"""Apex Legends Status API 数据获取层。
+
+封装对 https://api.mozambiquehe.re 的 HTTP 请求与响应解析，
+将所有 API 返回值转换为用户可读的中文格式化文本。
+"""
+
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
 from .config import config
-from .data import convert
+from .data import (
+    DEFAULT_PLATFORM,
+    OTHER_PLATFORMS,
+    PLATFORM_DISPLAY,
+    SELF_CORE_TESTS,
+    SERVER_REGIONS,
+    SERVER_SECTIONS,
+    convert,
+)
 
 logger = logging.getLogger(__name__)
 
+# Apex API 正常响应的 HTTP 状态码
 HTTP_OK: int = 200
-API_URL: str = "https://api.mozambiquehe.re"
 
 
 async def query_apex_api(
-    server: str, params: Optional[dict[str, Any]] = None
+    server: str, params: dict[str, Any] | None = None
 ) -> httpx.Response:
-    """向 Apex API 发送 GET 请求。"""
+    """向 Apex API 发送经过认证的 GET 请求。
+
+    Args:
+        server: API 端点路径（如 bridge、maprotation）
+        params: 额外的查询参数（如 player、platform）
+
+    Returns:
+        原始 httpx.Response 对象
+
+    超时设置为 30 秒，auth 参数自动携带 API Key。
+    """
     payload: dict[str, Any] = {"auth": config.apex_api_key}
     if params:
         payload.update(params)
     async with httpx.AsyncClient() as client:
-        return await client.get(f"{API_URL}/{server}", params=payload, timeout=30)
+        return await client.get(
+            f"{config.apex_api_url}/{server}", params=payload, timeout=30
+        )
 
 
 async def get_player_stats(
-    player_name: str, platform: str = "PC"
-) -> tuple[str, Optional[dict[str, Any]]]:
-    """获取玩家统计数据并格式化返回。同时返回原始数据用于存储对比。"""
+    player_name: str, platform: str = DEFAULT_PLATFORM
+) -> tuple[str, dict[str, Any] | None]:
+    """获取玩家统计数据并格式化返回。
+
+    返回二元组：
+    - 第一个元素：格式化的中文统计文本（失败时为错误提示）
+    - 第二个元素：原始数据字典（用于数据库存储和历史对比），失败时为 None
+
+    数据结构说明（来自 bridge 端点）：
+    - global:     玩家基础信息（名称、UID、等级、段位、封禁状态）
+    - realtime:   实时状态（大厅在线、可选传奇、当前模式等）
+    """
     try:
         response = await query_apex_api(
             "bridge", {"player": player_name, "platform": platform}
@@ -36,6 +71,7 @@ async def get_player_stats(
         logger.exception("Failed to query player stats")
         return "查询失败: 网络请求错误", None
 
+    # 非 200 响应直接透传原始内容，便于排查 API 侧问题
     if response.status_code != HTTP_OK:
         logger.warning(
             f"Player stats API returned {response.status_code}: {response.text}"
@@ -48,12 +84,13 @@ async def get_player_stats(
         logger.exception("Failed to parse player stats response")
         return "查询失败: API 返回数据格式错误", None
 
+    # 从嵌套结构中提取各子模块，使用 get 和默认值防御 KeyError
     global_data: dict[str, Any] = response_data.get("global", {})
     realtime_data: dict[str, Any] = response_data.get("realtime", {})
     bans_data: dict[str, Any] = global_data.get("bans", {})
     rank_data: dict[str, Any] = global_data.get("rank", {})
 
-    # 构建玩家信息
+    # 构建面向用户的 Key-Value 显示信息
     player_info: dict[str, Any] = {
         "名称": global_data.get("name"),
         "UID": global_data.get("uid"),
@@ -66,7 +103,7 @@ async def get_player_stats(
         ),
     }
 
-    # 如果封禁状态为 True，则追加封禁相关信息
+    # 仅在玩家处于封禁状态时追加封禁信息
     if bans_data.get("isActive"):
         player_info.update(
             {
@@ -76,12 +113,11 @@ async def get_player_stats(
             }
         )
 
-    # 处理大逃杀段位信息
+    # 拼接段位显示："大师 2" 或 "青铜"
     rank_div = rank_data.get("rankDiv")
     rank_name = convert(rank_data.get("rankName"))
     rank_display = f"{rank_name} {rank_div}" if rank_div else rank_name
 
-    # 继续构建其他玩家信息
     player_info.update(
         {
             "大逃杀分数": rank_data.get("rankScore"),
@@ -95,18 +131,20 @@ async def get_player_stats(
             "状态": convert(realtime_data.get("currentStateAsText")),
         }
     )
-    # 提取原始数据用于存储对比
+
+    # 提取精简的原始数据，用于持久化和历史对比
     raw_data: dict[str, Any] = {
         "uid": global_data.get("uid"),
         "name": global_data.get("name"),
         "platform": global_data.get("platform"),
         "level": global_data.get("level"),
         "rank_score": rank_data.get("rankScore"),
+        # rank_name 提前翻译便于持久化存储为中文
         "rank_name": convert(rank_data.get("rankName")),
         "rank_div": rank_data.get("rankDiv"),
     }
 
-    # 将玩家信息转换为字符串，过滤 None 值
+    # 拼装输出文本，过滤值为 None 的字段避免显示空值
     return (
         "玩家信息:\n"
         + "\n".join(
@@ -119,7 +157,10 @@ async def get_player_stats(
 
 
 def _format_map_data(map_data: dict[str, Any], mode_name: str) -> str:
-    """格式化单个模式的地图数据。"""
+    """格式化单个游戏模式的地图轮换信息。
+
+    每个模式包含 current（当前地图）和 next（下张地图）两部分。
+    """
     current = map_data.get("current", {})
     next_map = map_data.get("next", {})
     return (
@@ -131,7 +172,10 @@ def _format_map_data(map_data: dict[str, Any], mode_name: str) -> str:
 
 
 async def get_map_rotation() -> str:
-    """获取地图轮换信息并格式化返回。"""
+    """获取当前地图轮换信息（大逃杀、排位赛、混录带）。
+
+    使用 maprotation API v2 版本，返回三种模式的当前/下张地图及倒计时。
+    """
     try:
         response = await query_apex_api("maprotation", {"version": "2"})
     except httpx.HTTPError:
@@ -163,7 +207,11 @@ async def get_map_rotation() -> str:
 
 
 async def get_server_status() -> str:
-    """获取服务器状态并格式化返回。"""
+    """获取 Apex 各区域服务器运行状态。
+
+    查询结果按分区展示（Origin 登录、EA 服务、平台 API 等），
+    每个分区下按区域或服务名列出 UP/DOWN/SLOW/OVERLOADED 状态。
+    """
     try:
         response = await query_apex_api("servers")
     except httpx.HTTPError:
@@ -182,51 +230,21 @@ async def get_server_status() -> str:
         logger.exception("Failed to parse server status response")
         return "查询失败: API 返回数据格式错误"
 
-    sections = {
-        "Origin 登录": "Origin_login",
-        "EA 融合": "EA_novafusion",
-        "EA 账户": "EA_accounts",
-        "Apex 跨平台验证": "ApexOauth_Crossplay",
-        "自我核心测试": "selfCoreTest",
-        "其他平台": "otherPlatforms",
-    }
-    regions = {
-        "欧盟西部": "EU-West",
-        "欧盟东部": "EU-East",
-        "美国西部": "US-West",
-        "美国中部": "US-Central",
-        "美国东部": "US-East",
-        "南美洲": "SouthAmerica",
-        "亚洲": "Asia",
-    }
-    self_core_tests = {
-        "网站状态": "Status-website",
-        "统计 API": "Stats-API",
-        "溢出 #1": "Overflow-#1",
-        "溢出 #2": "Overflow-#2",
-        "Origin API": "Origin-API",
-        "Playstation API": "Playstation-API",
-        "Xbox API": "Xbox-API",
-    }
-    other_platforms = {
-        "Playstation Network": "Playstation-Network",
-        "Xbox Live": "Xbox-Live",
-    }
-
     data = ""
-    for section_name, section_key in sections.items():
+    # 遍历顶级分区，按分区类型选用对应的子项映射
+    for section_name, section_key in SERVER_SECTIONS.items():
         data += f"{section_name}:\n"
         section_data = response_data.get(section_key, {})
         if section_key == "selfCoreTest":
-            for test_name, test_key in self_core_tests.items():
+            for test_name, test_key in SELF_CORE_TESTS.items():
                 status = convert(section_data.get(test_key, {}).get("Status"))
                 data += f"{test_name}: {status}\n"
         elif section_key == "otherPlatforms":
-            for platform_name, platform_key in other_platforms.items():
+            for platform_name, platform_key in OTHER_PLATFORMS.items():
                 status = convert(section_data.get(platform_key, {}).get("Status"))
                 data += f"{platform_name}: {status}\n"
         else:
-            for region_name, region_key in regions.items():
+            for region_name, region_key in SERVER_REGIONS.items():
                 status = convert(section_data.get(region_key, {}).get("Status"))
                 data += f"{region_name}: {status}\n"
         data += "\n"
@@ -236,7 +254,10 @@ async def get_server_status() -> str:
 
 
 async def get_predator() -> str:
-    """查询顶猎分数并格式化返回。"""
+    """查询顶尖猎杀者分数（各平台大师/猎杀者排名数据）。
+
+    返回各平台（PC/PS4/X1/Switch）的猎杀者人数、最低分数及大师人数。
+    """
     try:
         response = await query_apex_api("predator")
     except httpx.HTTPError:
@@ -253,16 +274,11 @@ async def get_predator() -> str:
         logger.exception("Failed to parse predator response")
         return "查询失败: API 返回数据格式错误"
 
+    # RP 字段包含各平台排位数据
     rp = response_data.get("RP", {})
-    platforms = {
-        "PC": "PC 端",
-        "PS4": "PS4/5 端",
-        "X1": "Xbox 端",
-        "SWITCH": "Switch 端",
-    }
 
     data = "大逃杀:\n"
-    for platform_key, platform_name in platforms.items():
+    for platform_key, platform_name in PLATFORM_DISPLAY.items():
         platform_data = rp.get(platform_key, {})
         data += (
             f"{platform_name}:\n"
