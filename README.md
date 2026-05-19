@@ -29,34 +29,37 @@ _✨ 基于 NoneBot 的 Apex Legends API 查询插件 ✨_
 
 由于 API 的问题，您只能在查询玩家信息时使用 EA 账户用户名并非 Steam 账户用户名。
 
-数据由 API 提供，本插件仅作 数据获取 和 内容转换 。
+数据由 API 提供，本插件仅作 **数据获取** 和 **内容转换** 。
 
 ## 💿 安装
 
 <details>
 <summary>使用 nb-cli 安装</summary>
-在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
+在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装:
 
     nb plugin install nonebot_plugin_apex_api_query
 
 </details>
-
+<br>
 <details>
 <summary>使用包管理器安装</summary>
-在 nonebot2 项目的插件目录下, 打开命令行, 根据你使用的包管理器, 输入相应的安装命令
+在 nonebot2 项目的插件目录下, 打开命令行, 根据你使用的包管理器, 输入相应的安装命令:
 
+<br>
 <details>
 <summary>pip</summary>
 
     pip install nonebot_plugin_apex_api_query
 </details>
+<br>
 <details>
 <summary>poetry</summary>
 
     poetry add nonebot_plugin_apex_api_query
 </details>
+<br>
 
-打开 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分追加写入
+随后编辑 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分追加写入
 
     plugins = ["nonebot_plugin_apex_api_query"]
 
@@ -80,9 +83,35 @@ apex [s|server|服务器] #查询服务器状态
 apex [p|predator|顶猎] #查询顶猎分数
 ```
 
+## 🖼️ 效果
+
+```
+玩家信息:
+名称: Hx1aoH
+UID: 1014411853046
+平台: PC
+等级: 93
+距下一级百分比: 45%
+大逃杀分数: 9995
+大逃杀段位: 白金 3
+大厅状态: 打开
+在线: 否
+可加入: 否
+群满员: 否
+已选传奇: 导线管
+当前状态: 离线
+状态: Offline
+--- 数据变化 ---
+等级: 90 -> 93 (￪3)
+大逃杀分数: 9798 -> 9995 (↑197)
+大逃杀段位: 无变化 (白金 3)
+```
+
 ## 💖 鸣谢
 
-- [@nonebot](https://github.com/nonebot) 强大的 [NoneBot2 机器人框架](https://github.com/nonebot/nonebot2)
+- [@nonebot](https://github.com/nonebot) 强大的 [NoneBot2](https://github.com/nonebot/nonebot2) 机器人框架
+- [@ProgramRipper](https://github.com/ProgramRipper) 数据库支持插件 [orm](https://github.com/nonebot/plugin-orm)
+- [@yanyongyu](https://github.com/yanyongyu) 本地数据存储插件 [LocalStore](https://github.com/nonebot/plugin-localstore)
 
 ## 📄 许可证
 

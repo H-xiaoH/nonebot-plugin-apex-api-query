@@ -169,6 +169,8 @@ TRANSLATIONS = {
     "Newcastle": "纽卡斯尔",
     "Vantage": "万蒂奇",
     "Catalyst": "卡特莉丝",
+    "Conduit": "导线管",
+    "Axle": "艾克塞尔",
     # 物品稀有度
     "Common": "等级1",
     "Rare": "等级2",
