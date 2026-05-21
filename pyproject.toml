@@ -1,21 +1,30 @@
 [project]
 name = "nonebot-plugin-apex-api-query"
-version = "26.5.20"
+version = "26.5.21"
 description = "Apex Legends API 查询插件，支持玩家数据、地图轮换、服务器状态和顶猎分数查询"
 authors = [
-    {name = "H-xiaoH",email = "a412454922@gmail.com"}
+    {name = "H-xiaoH", email = "a412454922@gmail.com"}
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+]
+keywords = ["nonebot", "nonebot2", "apex", "apex-legends"]
 readme = "README.md"
-requires-python = ">=3.9,<4.0"
+requires-python = ">=3.10,<4.0"
 dependencies = [
-    "nonebot2 (>=2.5.0)",
-    "nonebot-adapter-onebot (>=2.4.6)",
-    "nonebot-plugin-alconna (>=0.62.0)",
-    "httpx (>=0.28.1)",
-    "nonebot-plugin-orm (>=0.8.3)",
-    "nonebot-plugin-localstore (>=0.7.4)",
+    "nonebot2>=2.5.0",
+    "nonebot-adapter-onebot>=2.4.6",
+    "nonebot-plugin-alconna>=0.62.0",
+    "httpx>=0.28.1",
+    "nonebot-plugin-orm>=0.8.3",
+    "nonebot-plugin-localstore>=0.7.4",
 ]
-license = { text = "MIT" }
+license = "MIT"
+
+[project.entry-points.nonebot2]
+apex_api_query = "nonebot_plugin_apex_api_query"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
