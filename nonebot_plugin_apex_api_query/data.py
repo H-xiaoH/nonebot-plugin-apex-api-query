@@ -1,9 +1,3 @@
-"""翻译数据与常量模块。
-
-提供英文到中文的翻译表、平台枚举、服务器状态区域映射等静态数据。
-所有对外输出的中文文本均由此模块统一管理。
-"""
-
 from typing import Any
 
 VALID_PLATFORMS: list[str] = ["PC", "PS4", "X1", "SWITCH"]
@@ -77,67 +71,85 @@ MAP_TRANSLATIONS: dict[str, str] = {
     "The Core": "核心",
     "Monument": "纪念碑",
     "Thunderdome": "雷霆圆顶",
+    "Hammond Labs": "哈蒙德实验室",
+    "Estates": "不动产",
     "Unknown": "未知",
     "None": "无",
 }
 
 WEAPON_TRANSLATIONS: dict[str, str] = {
-    "peacekeeper": "和平捍卫者",
-    "spitfire": "喷火轻机枪",
-    "longbow": "长弓",
-    "volt": "电能冲锋枪",
+    # 突击步枪
     "havoc": "哈沃克步枪",
     "flatline": "平行步枪",
     "hemlok": "赫姆洛克突击步枪",
     "r-301": "R-301 卡宾枪",
+    "nemesis": "复仇女神",
+    # 冲锋枪
     "alternator": "转换者冲锋枪",
     "prowler": "猎兽冲锋枪",
     "r-99": "R-99 冲锋枪",
+    "volt": "电能冲锋枪",
     "car": "CAR",
+    # 轻机枪
     "devotion": "专注轻机枪",
     "l-star": "L-STAR 能量机枪",
+    "spitfire": "喷火轻机枪",
     "rampage": "暴走",
+    # 神射手
     "g7-scout": "G7 侦察枪",
     "triple-take": "三重式狙击枪",
     "repeater": "30-30",
     "bow": "波塞克",
+    # 狙击枪
     "charge-rifle": "充能步枪",
+    "longbow": "长弓",
     "kraber": "克雷贝尔狙击枪",
     "sentinel": "哨兵狙击步枪",
+    # 霰弹枪
     "eva": "EVA-8",
     "mastiff": "敖犬霰弹枪",
     "mozambique": "莫桑比克",
+    "peacekeeper": "和平捍卫者",
+    # 手枪
     "re-45": "RE-45 自动手枪",
     "p2020": "P2020 手枪",
-    "wingman": "辅助手枪",
+    "wingman": "辅助手枪"
 }
 
 LEGEND_TRANSLATIONS: dict[str, str] = {
-    "Bloodhound": "寻血猎犬",
-    "Gibraltar": "直布罗陀",
-    "Lifeline": "命脉",
+    # 突击位
+    "Bangalore": "班加罗尔",
+    "Revenant": "亡灵",
+    "Fuse": "暴雷",
+    "Mad Maggie": "疯玛吉",
+    "Ballstic": "弹道",
+    # 游击位
     "Pathfinder": "探路者",
     "Wraith": "恶灵",
-    "Bangalore": "班加罗尔",
-    "Caustic": "侵蚀",
-    "Mirage": "幻象",
     "Octane": "动力小子",
-    "Wattson": "沃特森",
-    "Crypto": "密客",
-    "Revenant": "亡灵",
-    "Loba": "罗芭",
-    "Rampart": "兰伯特",
     "Horizon": "地平线",
-    "Fuse": "暴雷",
+    "Ash": "艾许",
+    "Alter": "变幻",
+    "Axle": "艾克塞尔",
+    # 侦查位
+    "Bloodhound": "寻血猎犬",
+    "Crypto": "密客",
     "Valkyrie": "瓦尔基里",
     "Seer": "希尔",
-    "Ash": "艾许",
-    "Mad Maggie": "疯玛吉",
-    "Newcastle": "纽卡斯尔",
     "Vantage": "万蒂奇",
-    "Catalyst": "卡特莉丝",
+    "Sparrow": "硫雀",
+    # 支援位
+    "Gibraltar": "直布罗陀",
+    "Lifeline": "命脉",
+    "Mirage": "幻象",
+    "Loba": "罗芭",
+    "Newcastle": "纽卡斯尔",
     "Conduit": "导线管",
-    "Axle": "艾克塞尔",
+    # 控制位
+    "Caustic": "侵蚀",
+    "Wattson": "沃特森",
+    "Rampart": "兰伯特",
+    "Catalyst": "卡特莉丝"
 }
 
 RANK_TRANSLATIONS: dict[str, str] = {
