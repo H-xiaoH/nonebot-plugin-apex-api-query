@@ -73,6 +73,10 @@ MAP_TRANSLATIONS: dict[str, str] = {
     "Thunderdome": "雷霆圆顶",
     "Hammond Labs": "哈蒙德实验室",
     "Estates": "不动产",
+    "Caustic Treatment": "侵蚀",
+    "Control": "控制",
+    "Gun Run": "军备竞赛",
+    "TDM": "团队死斗",
     "Unknown": "未知",
     "None": "无",
 }
@@ -276,6 +280,20 @@ BAN_TRANSLATIONS: dict[str, str] = {
     "COMPETITIVE_DODGE_COOLDOWN": "竞技逃跑冷却",
 }
 
+EVENT_TRANSLATIONS: dict[str, str] = {
+    "Gun Run": "军火赛",
+    "TDM": "团队死斗",
+    "Control": "控制",
+    "Big TDM": "大型团队死斗",
+    "Lockdown": "封锁",
+    "Hardcore": "硬核",
+    "Three Strikes": "三重击",
+    "Straight Shot": "直击",
+    "Revival": "复活",
+    "DeadEye's Tempo": "神枪手节奏",
+    "Sword Core": "剑核心",
+}
+
 BOOLEAN_TRANSLATIONS: dict[Any, str] = {
     0: "否",
     1: "是",
@@ -294,6 +312,7 @@ TRANSLATIONS: dict[Any, str] = {
     **STATUS_TRANSLATIONS,
     **SERVER_STATUS_TRANSLATIONS,
     **BAN_TRANSLATIONS,
+    **EVENT_TRANSLATIONS,
     **BOOLEAN_TRANSLATIONS,
 }
 
