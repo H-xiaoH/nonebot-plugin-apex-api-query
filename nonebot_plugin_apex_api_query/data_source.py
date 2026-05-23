@@ -17,6 +17,8 @@ from .data import (
 
 logger = logging.getLogger(__name__)
 
+HTTP_OK = 200
+
 
 class ApexAPIError(Exception):
     """API 请求或解析失败时抛出，携带用户可见的错误信息。"""
@@ -53,19 +55,19 @@ async def _fetch(
     """
     try:
         response = await query_apex_api(endpoint, params)
-    except httpx.HTTPError:
+    except httpx.HTTPError as e:
         logger.exception(f"Failed to query {endpoint}")
-        raise ApexAPIError("查询失败: 网络请求错误")
-    if response.status_code != 200:
+        raise ApexAPIError("查询失败: 网络请求错误") from e  # noqa: TRY003
+    if response.status_code != HTTP_OK:
         logger.warning(
             f"API {endpoint} returned {response.status_code}: {response.text}"
         )
         raise ApexAPIError(response.text)
     try:
         return response.json()
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
         logger.exception(f"Failed to parse {endpoint} response")
-        raise ApexAPIError("查询失败: API 返回数据格式错误")
+        raise ApexAPIError("查询失败: API 返回数据格式错误") from e  # noqa: TRY003
 
 
 async def get_player_stats(
@@ -139,6 +141,20 @@ async def get_player_stats(
         "rank_score": rank_data.get("rankScore"),
         "rank_name": convert(rank_data.get("rankName")),
         "rank_div": rank_data.get("rankDiv"),
+        "rank_img": rank_data.get("rankImg", ""),
+        "avatar": global_data.get("avatar", ""),
+        "selected_legend": convert(realtime_data.get("selectedLegend", "")),
+        "current_state": convert(realtime_data.get("currentState", "")),
+        "global_rank_pct": str(rank_data.get("ALStopPercentGlobal", "")),
+        "to_next_level_pct": global_data.get("toNextLevelPercent"),
+        "lobby_state": convert(realtime_data.get("lobbyState", "")),
+        "is_online": convert(realtime_data.get("isOnline")),
+        "can_join": convert(realtime_data.get("canJoin")),
+        "party_full": convert(realtime_data.get("partyFull")),
+        "state_as_text": convert(realtime_data.get("currentStateAsText", "")),
+        "ban_is_active": bans_data.get("isActive"),
+        "ban_remaining_secs": bans_data.get("remainingSeconds"),
+        "ban_reason": convert(bans_data.get("last_banReason", "")),
     }
 
     return (
@@ -195,6 +211,84 @@ async def get_map_rotation() -> str:
     return data.strip()
 
 
+async def get_map_rotation_data() -> dict[str, Any] | str:
+    """从 apexlegendsstatus.com 获取地图轮换结构化数据（含图片 asset URL）。
+
+    Returns:
+        dict: 含 battle_royale/ranked/ltm 的完整 API 响应数据。
+        请求失败时返回错误信息字符串。
+    """
+    payload: dict[str, Any] = {"auth": config.apex_api_key, "version": "2"}
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{config.apex_map_api_url}/maprotation",
+                params=payload,
+                timeout=30,
+            )
+        if resp.status_code != HTTP_OK:
+            logger.warning(
+                f"Map API returned {resp.status_code}: {resp.text}"
+            )
+            return f"地图查询失败: {resp.status_code}"
+        return resp.json()
+    except httpx.HTTPError:
+        logger.exception("Failed to query maprotation API")
+        return "地图查询失败: 网络请求错误"
+    except json.JSONDecodeError:
+        logger.exception("Failed to parse maprotation response")
+        return "地图查询失败: API 返回数据格式错误"
+
+
+async def get_server_status_data() -> list[dict[str, Any]] | str:
+    """获取各分区服务器运行状态结构化数据。
+
+    Returns:
+        list[dict]: 按 section 分组的数据列表，每项含 section_name, section_key, rows。
+        请求失败时返回错误信息字符串。
+    """
+    try:
+        response_data = await _fetch("servers")
+    except ApexAPIError as e:
+        return str(e)
+
+    sections: list[dict[str, Any]] = []
+    for section_name, section_key in SERVER_SECTIONS.items():
+        section_rows: list[dict[str, Any]] = []
+        section_data = response_data.get(section_key, {})
+        if section_key == "selfCoreTest":
+            for test_name, test_key in SELF_CORE_TESTS.items():
+                entry = section_data.get(test_key, {})
+                section_rows.append({
+                    "name": test_name,
+                    "status": entry.get("Status", ""),
+                    "response_time": entry.get("ResponseTime", -1),
+                })
+        elif section_key == "otherPlatforms":
+            for platform_name, platform_key in OTHER_PLATFORMS.items():
+                entry = section_data.get(platform_key, {})
+                section_rows.append({
+                    "name": platform_name,
+                    "status": entry.get("Status", ""),
+                    "response_time": entry.get("ResponseTime", -1),
+                })
+        else:
+            for region_name, region_key in SERVER_REGIONS.items():
+                entry = section_data.get(region_key, {})
+                section_rows.append({
+                    "name": region_name,
+                    "status": entry.get("Status", ""),
+                    "response_time": entry.get("ResponseTime", -1),
+                })
+        if section_rows:
+            sections.append({
+                "section_name": section_name,
+                "section_key": section_key,
+                "rows": section_rows,
+            })
+    return sections
+
+
 async def get_server_status() -> str:
     """获取各分区服务器运行状态。
 
@@ -226,6 +320,30 @@ async def get_server_status() -> str:
 
     lines.append("Data from apexlegendsstatus.com")
     return "\n".join(lines)
+
+
+async def get_predator_data() -> dict[str, Any] | str:
+    """获取各平台顶尖猎杀者排行结构化数据。
+
+    Returns:
+        dict: 按平台分组的排行数据。请求失败时返回错误信息字符串。
+    """
+    try:
+        response_data = await _fetch("predator")
+    except ApexAPIError as e:
+        return str(e)
+    rp = response_data.get("RP", {})
+    result: dict[str, Any] = {}
+    for platform_key, platform_name in PLATFORM_DISPLAY.items():
+        platform_data = rp.get(platform_key, {})
+        result[platform_key] = {
+            "name": platform_name,
+            "found_rank": platform_data.get("foundRank", 0),
+            "val": platform_data.get("val", 0),
+            "uid": platform_data.get("uid", ""),
+            "total_masters": platform_data.get("totalMastersAndPreds", 0),
+        }
+    return result
 
 
 async def get_predator() -> str:
