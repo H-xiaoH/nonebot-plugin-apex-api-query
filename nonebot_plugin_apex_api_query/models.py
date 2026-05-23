@@ -1,4 +1,6 @@
-from datetime import datetime
+from __future__ import annotations
+
+from datetime import datetime  # noqa: TC003
 
 from nonebot_plugin_orm import Model
 from sqlalchemy import Index
