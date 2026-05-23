@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from nonebot_plugin_orm import get_session
 from sqlalchemy import desc, select
@@ -61,13 +61,14 @@ async def save_record(
             rank_score=stats.rank_score,
             rank_name=stats.rank_name,
             rank_div=stats.rank_div,
-            created_at=datetime.now(tz=timezone.utc),
+            created_at=datetime.now(tz=UTC),
         )
         session.add(record)
         await session.commit()
 
 
 def _rank_name(stats: PlayerStatsData) -> str:
+    """返回含段位数字的完整段位名，无分段时仅返回段位名。"""
     if stats.rank_div is not None:
         return f"{stats.rank_name} {stats.rank_div}"
     return stats.rank_name
