@@ -63,7 +63,7 @@ SECTION_H = 200
 NEXT_H = 60
 GAP = 6
 FOOTER_H = 36
-CARD_H = 3 * (ACCENT_H + SECTION_H + NEXT_H) + 2 * GAP + FOOTER_H
+CARD_H = 3 * (ACCENT_H + SECTION_H + NEXT_H) + 2 * GAP
 RING_RADIUS = 56
 RING_CENTER_X = 820
 RING_CENTER_Y_OFFSET = 100
@@ -352,8 +352,6 @@ async def render_map_card(data: dict[str, Any]) -> bytes:
             continue
         y = _draw_mode_section(canvas, y, mode_key, mode_data)
 
-    _draw_footer(draw, CARD_W, CARD_H, FOOTER_H, 0)
-
     buf = io.BytesIO()
     canvas.save(buf, format="PNG")
     return buf.getvalue()
@@ -524,13 +522,11 @@ async def render_predator_card(data: dict[str, Any]) -> bytes:
     cell_h = PRED_ROW_H * 3 + PRED_CELL_PAD * 2
     card_h = (
         PRED_HEADER_H + len(active) * (cell_h + PRED_SECTION_GAP)
-        + PRED_FOOTER_H + 20
     )
 
     canvas = Image.new("RGBA", (PRED_CARD_W, card_h), _CARD_BG)
     draw: ImageDraw.ImageDraw = ImageDraw.Draw(canvas)
     draw.text((24, 8), "Apex 猎杀者", font=_load_font(38), fill=(255, 255, 255))
-    _draw_footer(draw, PRED_CARD_W, card_h, PRED_FOOTER_H, 0)
 
     start_x = (PRED_CARD_W - PRED_CELL_W) // 2
     y = PRED_HEADER_H + 16
@@ -549,7 +545,6 @@ PLAYER_FOOTER_H = 26
 PLAYER_PANEL_PAD = 18
 PLAYER_ROW_H = 34
 PLAYER_SECTION_GAP = 14
-
 
 async def _load_and_paste(
     canvas: Image.Image, url: str, dest_x: int, dest_y: int, size: int,
@@ -577,17 +572,15 @@ async def render_player_card(  # noqa: PLR0915
     num_sections = 3 + (1 if ban_active else 0) + (1 if changes else 0)
     card_h = (
         110 + rank_h + 28 + data_rows * PLAYER_ROW_H + 24
-        + (2 if changes else 0) * PLAYER_ROW_H + 20
+        + (2 if changes else 0) * PLAYER_ROW_H + (20 if not changes else -28)
         + (2 * PLAYER_ROW_H + 20 if ban_active else 0)
         + num_sections * PLAYER_SECTION_GAP
-        + PLAYER_FOOTER_H + 4
     )
 
     canvas = Image.new("RGBA", (PLAYER_CARD_W, card_h), _CARD_BG)
     draw: ImageDraw.ImageDraw = ImageDraw.Draw(canvas)
 
     draw.text((24, 8), "Apex 玩家信息", font=_load_font(38), fill=(255, 255, 255))
-    _draw_footer(draw, PLAYER_CARD_W, card_h, PLAYER_FOOTER_H, 0)
 
     name = str(player.get("name", "未知"))
     draw.text(
@@ -689,17 +682,6 @@ async def render_player_card(  # noqa: PLR0915
         draw.text((48, y + 58), ban_line2, font=vfont, fill=(255, 200, 200))
         y += ban_h + PLAYER_SECTION_GAP
 
-    if changes:
-        ch_text = "  |  ".join(f"{k} {v}" for k, v in changes.items())
-        ch_font = _load_font(20)
-        cw, _ = _text_size(draw, ch_text, ch_font)
-        if cw > PLAYER_CARD_W - 56:
-            ch_font = _load_font(16)
-            cw, _ = _text_size(draw, ch_text, ch_font)
-        draw.text(
-            ((PLAYER_CARD_W - cw) // 2, y + 4),
-            ch_text, font=ch_font, fill=(200, 208, 220),
-        )
 
     buf = io.BytesIO()
     canvas.save(buf, format="PNG")
