@@ -5,7 +5,7 @@
 ## 快速开始
 ```bash
 poetry install
-# 无测试配置。无 lint/typecheck 配置。
+poetry run pytest tests/ -v          # 106 测试，86% 覆盖率
 # 插件仅在运行中的 NoneBot2 机器人内加载。
 ```
 
@@ -22,6 +22,7 @@ poetry install
 | `storage.py` | 数据库读写，保存玩家记录，对比当前与上一次数据 |
 | `image.py` | PIL+numpy 图片渲染（4 种卡片类型：player/map/server/predator） |
 | `fonts/` | `NotoSansSC-VariableFont_wght.ttf` |
+| `tests/` | 7 个测试文件 + conftest.py |
 
 入口点：`apex_api_query = "nonebot_plugin_apex_api_query"` (pyproject.toml:28-29)
 
@@ -60,12 +61,18 @@ APEX_ONLY_TEXT = False    # 设为 True 跳过图片渲染
 - 字体：`Path(__file__).parent / "fonts" / "NotoSansSC-VariableFont_wght.ttf"` — 通过 `font.setvaraxes([weight])` 支持可变字重。字体缺失时回退到 PIL 默认字体。
 - 地图图片通过 `nonebot_plugin_localstore` 缓存（`get_plugin_data_dir() / "map_images"`），重启后持久保留。
 - 使用 PIL + numpy（用于渐变叠加）。
+- `render_player_card` / `render_map_card` / `render_predator_card` 不再绘制 "Data from" 脚注（仅 `render_server_card` 保留）。
 
 ## 翻译
 所有游戏内容翻译以字典映射形式存放在 `data.py` 中。`convert()` 在无对应翻译时返回原始键名。无外部国际化框架。在 `data.py` 的字典中追加条目即可添加翻译。
 
 ## CI / 发布
-推送到 `main` 分支 → Poetry 构建 → 发布到 PyPI（OIDC 可信发布，`pypa/gh-action-pypi-publish@release/v1`）。无需 API 令牌。版本约定：`26.5.28`（基于日期）。
+推送到 `main` 分支 → Poetry 构建 → 发布到 PyPI（OIDC 可信发布，`pypa/gh-action-pypi-publish@release/v1`）。无需 API 令牌。版本约定：`26.6.14`（基于日期）。`tests.yml` 在 push/PR 时运行。
 
-## 无测试基础设施
-无测试文件，无测试框架，无 CI 测试步骤。`.gitignore` 包含 pytest/coverage 模式但未被使用。添加测试时需从头搭建。
+## 测试
+- `poetry run pytest tests/ -v` — 106 测试，零失败
+- 使用 `pytest-httpx` mock HTTP，`nonebug` 初始化 NoneBot 运行时
+- **关键规则**：所有 `nonebot_plugin_apex_api_query` 的导入必须在测试函数内部（模块顶层导入会触发 `get_driver()` 崩溃）
+- `conftest.py` 在 `pytest_configure` 设置 `APEX_API_KEY=test-key`
+- 处理器测试绕过 Alconna 路由，直接调用 handler 函数 + `patch.object(AlconnaMatcher, "finish")`
+- DB 测试使用 3 层 AsyncMock chain 模拟 `get_session() → execute() → scalar_one_or_none()`
