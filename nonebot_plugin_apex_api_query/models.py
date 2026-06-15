@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import datetime  # noqa: TC003
 
 from nonebot_plugin_orm import Model
@@ -10,7 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 class PlayerStats(Model):
     __tablename__ = "apex_player_stats"
     __table_args__ = (
-        Index("ix_apex_player_stats_uid_platform", "uid", "platform"),
+        Index("idx_uid_platform", "uid", "platform"),
+        {"info": {"bind_key": ""}},
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
