@@ -84,8 +84,7 @@ plugins = ["nonebot_plugin_apex_api_query"]
 | 配置项 | 类型 | 必填 | 默认值 | 说明 |
 |--------|------|------|--------|------|
 | `APEX_API_KEY` | str | **是** | `""` | Apex API 密钥，必须填写 |
-| `APEX_API_URL` | str | 否 | `https://api.mozambiquehe.re` | 玩家/服务器/顶猎 API 地址 |
-| `APEX_MAP_API_URL` | str | 否 | `https://api.apexlegendsstatus.com` | 地图轮换 API 地址 |
+| `APEX_API_URL` | str | 否 | `https://api.apexlegendsstatus.com` | API 地址（玩家/地图/服务器/顶猎共用） |
 | `APEX_ONLY_TEXT` | bool | 否 | `False` | 是否仅使用纯文本输出（不渲染图片） |
 
 示例：
@@ -93,7 +92,6 @@ plugins = ["nonebot_plugin_apex_api_query"]
 ```env
 APEX_API_KEY = "你的 API 密钥"
 # 以下均为可选配置
-APEX_MAP_API_URL = "https://api.apexlegendsstatus.com"
 APEX_ONLY_TEXT = False
 ```
 
