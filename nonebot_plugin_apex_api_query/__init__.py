@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-import numpy as np
 from nonebot import get_driver, require
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -32,13 +31,55 @@ from nonebot_plugin_alconna import (
     UniMessage,
     on_alconna,
 )
-from nonebot_plugin_alconna.extension import Extension, Interface
 from nonebot_plugin_localstore import get_plugin_data_dir
 from nonebot_plugin_orm import get_session
 from sqlalchemy import desc, select
 
 from .config import config
 from .models import PlayerStats
+
+# ── 模块级常量 ──
+_TEXT_WHITE = (255, 255, 255)
+_TEXT_GRAY = (170, 178, 190)
+_TEXT_LABEL = (140, 148, 160)
+_RING_GREEN = (47, 161, 108)
+_RING_ORANGE = (194, 137, 24)
+_RING_RED = (194, 20, 20)
+_TEXT_DIM = (110, 118, 130)
+
+_CARD_BG = (24, 24, 24, 255)
+_ACCENT = (218, 49, 52)
+
+_SERVER_SECTIONS: dict[str, str] = {
+    "Origin 登录": "Origin_login",
+    "EA 融合": "EA_novafusion",
+    "EA 账户": "EA_accounts",
+    "Apex 跨平台验证": "ApexOauth_Crossplay",
+    "自我核心测试": "selfCoreTest",
+    "其他平台": "otherPlatforms",
+}
+_SERVER_REGIONS: dict[str, str] = {
+    "欧盟西部": "EU-West",
+    "欧盟东部": "EU-East",
+    "美国西部": "US-West",
+    "美国中部": "US-Central",
+    "美国东部": "US-East",
+    "南美洲": "SouthAmerica",
+    "亚洲": "Asia",
+}
+_SELF_CORE_TESTS: dict[str, str] = {
+    "网站状态": "Status-website",
+    "统计 API": "Stats-API",
+    "溢出 #1": "Overflow-#1",
+    "溢出 #2": "Overflow-#2",
+    "Origin API": "Origin-API",
+    "Playstation API": "Playstation-API",
+    "Xbox API": "Xbox-API",
+}
+_OTHER_PLATFORMS: dict[str, str] = {
+    "Playstation Network": "Playstation-Network",
+    "Xbox Live": "Xbox-Live",
+}
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +95,10 @@ __plugin_meta__ = PluginMetadata(
     extra={"author": "H-xiaoH <a412454922@gmail.com>"},
 )
 
+# ── 模块级状态 ──
+_image_cache: dict[str, Image.Image] = {}
+_font_cache: dict[tuple[int, int], ImageFont.FreeTypeFont | ImageFont.ImageFont] = {}
+
 
 @driver.on_shutdown
 async def _on_shutdown() -> None:
@@ -64,17 +109,10 @@ def convert(name: Any) -> Any:
     if not hasattr(convert, "_translations"):
         path = Path(__file__).parent / "data" / "translations.json"
         with path.open(encoding="utf-8") as f:
-            convert._translations = json.load(f)
+            convert._translations = json.load(f)  # type: ignore[attr-defined]
     if isinstance(name, (int, float)):
-        return convert._translations.get(str(name), name)
-    return convert._translations.get(name, name)
-
-
-def _to_int(value: Any, default: int | None = 0) -> int | None:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return default
+        return convert._translations.get(str(name), name)  # type: ignore[attr-defined]
+    return convert._translations.get(name, name)  # type: ignore[attr-defined]
 
 
 class AsyncTTLCache:
@@ -103,6 +141,11 @@ class AsyncTTLCache:
     async def invalidate(self, key: str) -> None:
         async with self._lock:
             self._store.pop(key, None)
+
+
+_map_rotation_cache = AsyncTTLCache(ttl=60)
+_server_status_cache = AsyncTTLCache(ttl=30)
+_predator_cache = AsyncTTLCache(ttl=300)
 
 
 @dataclass
@@ -142,12 +185,6 @@ async def save_record(
         await session.commit()
 
 
-def _rank_name(stats: PlayerStatsData) -> str:
-    if stats.rank_div is not None:
-        return f"{stats.rank_name} {stats.rank_div}"
-    return stats.rank_name
-
-
 def format_comparison(
     current: PlayerStatsData, previous: PlayerStatsData,
 ) -> dict[str, str]:
@@ -164,8 +201,16 @@ def format_comparison(
     elif score_diff < 0:
         changes["大逃杀分数"] = f"(↓{abs(score_diff)})"
 
-    prev_rank = _rank_name(previous)
-    curr_rank = _rank_name(current)
+    prev_rank = (
+        f"{previous.rank_name} {previous.rank_div}"
+        if previous.rank_div is not None
+        else previous.rank_name
+    )
+    curr_rank = (
+        f"{current.rank_name} {current.rank_div}"
+        if current.rank_div is not None
+        else current.rank_name
+    )
     if prev_rank != curr_rank:
         changes["大逃杀段位"] = f"({prev_rank})"
 
@@ -227,38 +272,19 @@ def format_player_stats(player_info: dict[str, Any]) -> str:
     )
 
 
-class ErrorLogExtension(Extension):
-    @property
-    def priority(self) -> int:
-        return 15
-
-    @property
-    def id(self) -> str:
-        return "apex:error_log"
-
-    async def catch(self, interface: Interface) -> Any:
-        logger.warning(
-            "Unresolved dependency name=%s annotation=%s default=%s",
-            interface.name,
-            interface.annotation,
-            interface.default,
-        )
-        return interface.default
-
-
-_client: list[httpx.AsyncClient | None] = [None]
-
-
 def _get_client() -> httpx.AsyncClient:
-    if _client[0] is None:
-        _client[0] = httpx.AsyncClient(timeout=httpx.Timeout(30.0))
-    return _client[0]
+    if _get_client._client is None:  # type: ignore[union-attr]
+        _get_client._client = httpx.AsyncClient(timeout=httpx.Timeout(30.0))  # type: ignore[union-attr]
+    return _get_client._client  # type: ignore[union-attr]
+
+
+_get_client._client: httpx.AsyncClient | None = None  # type: ignore[union-attr]
 
 
 async def _cleanup_ds() -> None:
-    if _client[0] is not None:
-        await _client[0].aclose()
-        _client[0] = None
+    if _get_client._client is not None:  # type: ignore[union-attr]
+        await _get_client._client.aclose()  # type: ignore[union-attr]
+        _get_client._client = None  # type: ignore[union-attr]
 
 
 class ApexAPIError(Exception):
@@ -375,15 +401,12 @@ async def get_player_stats(
 
 
 async def get_map_rotation_data() -> dict[str, Any]:
-    cached = await get_map_rotation_data._cache.get("maprotation")
+    cached = await _map_rotation_cache.get("maprotation")
     if cached is not None:
         return cached
     data = await _fetch("maprotation", {"version": "2"})
-    await get_map_rotation_data._cache.set("maprotation", data)
+    await _map_rotation_cache.set("maprotation", data)
     return data
-
-
-get_map_rotation_data._cache = AsyncTTLCache(ttl=60)
 
 
 async def get_map_rotation() -> tuple[str, dict[str, Any]]:
@@ -407,43 +430,12 @@ async def get_map_rotation() -> tuple[str, dict[str, Any]]:
 async def _traverse_server_sections(
     raw_data: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    server_sections: dict[str, str] = {
-        "Origin 登录": "Origin_login",
-        "EA 融合": "EA_novafusion",
-        "EA 账户": "EA_accounts",
-        "Apex 跨平台验证": "ApexOauth_Crossplay",
-        "自我核心测试": "selfCoreTest",
-        "其他平台": "otherPlatforms",
-    }
-    server_regions: dict[str, str] = {
-        "欧盟西部": "EU-West",
-        "欧盟东部": "EU-East",
-        "美国西部": "US-West",
-        "美国中部": "US-Central",
-        "美国东部": "US-East",
-        "南美洲": "SouthAmerica",
-        "亚洲": "Asia",
-    }
-    self_core_tests: dict[str, str] = {
-        "网站状态": "Status-website",
-        "统计 API": "Stats-API",
-        "溢出 #1": "Overflow-#1",
-        "溢出 #2": "Overflow-#2",
-        "Origin API": "Origin-API",
-        "Playstation API": "Playstation-API",
-        "Xbox API": "Xbox-API",
-    }
-    other_platforms: dict[str, str] = {
-        "Playstation Network": "Playstation-Network",
-        "Xbox Live": "Xbox-Live",
-    }
-
     sections: list[dict[str, Any]] = []
-    for section_name, section_key in server_sections.items():
+    for section_name, section_key in _SERVER_SECTIONS.items():
         section_rows: list[dict[str, Any]] = []
         section_data = raw_data.get(section_key, {})
         if section_key == "selfCoreTest":
-            for test_name, test_key in self_core_tests.items():
+            for test_name, test_key in _SELF_CORE_TESTS.items():
                 entry = section_data.get(test_key, {})
                 section_rows.append({
                     "name": test_name,
@@ -451,7 +443,7 @@ async def _traverse_server_sections(
                     "response_time": entry.get("ResponseTime", -1),
                 })
         elif section_key == "otherPlatforms":
-            for platform_name, platform_key in other_platforms.items():
+            for platform_name, platform_key in _OTHER_PLATFORMS.items():
                 entry = section_data.get(platform_key, {})
                 section_rows.append({
                     "name": platform_name,
@@ -459,7 +451,7 @@ async def _traverse_server_sections(
                     "response_time": entry.get("ResponseTime", -1),
                 })
         else:
-            for region_name, region_key in server_regions.items():
+            for region_name, region_key in _SERVER_REGIONS.items():
                 entry = section_data.get(region_key, {})
                 section_rows.append({
                     "name": region_name,
@@ -476,16 +468,13 @@ async def _traverse_server_sections(
 
 
 async def get_server_status_data() -> list[dict[str, Any]]:
-    cached = await get_server_status_data._cache.get("servers")
+    cached = await _server_status_cache.get("servers")
     if cached is not None:
         return cached
     response_data = await _fetch("servers")
     sections = await _traverse_server_sections(response_data)
-    await get_server_status_data._cache.set("servers", sections)
+    await _server_status_cache.set("servers", sections)
     return sections
-
-
-get_server_status_data._cache = AsyncTTLCache(ttl=30)
 
 
 async def get_server_status() -> tuple[str, list[dict[str, Any]]]:
@@ -497,7 +486,7 @@ async def get_server_status() -> tuple[str, list[dict[str, Any]]]:
 
 
 async def get_predator_data() -> dict[str, Any]:
-    cached = await get_predator_data._cache.get("predator")
+    cached = await _predator_cache.get("predator")
     if cached is not None:
         return cached
     platform_display: dict[str, str] = {
@@ -518,11 +507,8 @@ async def get_predator_data() -> dict[str, Any]:
             "uid": platform_data.get("uid", ""),
             "total_masters": platform_data.get("totalMastersAndPreds", 0),
         }
-    await get_predator_data._cache.set("predator", result)
+    await _predator_cache.set("predator", result)
     return result
-
-
-get_predator_data._cache = AsyncTTLCache(ttl=300)
 
 
 async def get_predator() -> tuple[str, dict[str, Any]]:
@@ -546,7 +532,7 @@ apex = on_alconna(Alconna(
         example="/apex [玩家名称/地图/服务器/顶猎] [平台]",
         author=__plugin_meta__.extra["author"],
     ),
-), extensions=[ErrorLogExtension()])
+))
 
 _player_matcher = apex.dispatch("$main")
 _map_matcher = apex.dispatch("map")
@@ -556,24 +542,19 @@ _predator_matcher = apex.dispatch("predator")
 
 # ── PIL rendering ──
 
-_CARD_BG = (24, 24, 24, 255)
-_ACCENT = (218, 49, 52)
-
-_image_cache: dict[str, Image.Image] = {}
-_font_cache: dict[tuple[int, int], ImageFont.FreeTypeFont | ImageFont.ImageFont] = {}
-_map_cache_dir: list[Path | None] = [None]
-
-
 def _get_map_cache_dir() -> Path:
-    if _map_cache_dir[0] is None:
+    if _get_map_cache_dir._dir is None:  # type: ignore[union-attr]
         try:
-            _map_cache_dir[0] = get_plugin_data_dir() / "map_images"
+            _get_map_cache_dir._dir = get_plugin_data_dir() / "map_images"  # type: ignore[union-attr]
         except RuntimeError:
-            _map_cache_dir[0] = (
+            _get_map_cache_dir._dir = (  # type: ignore[union-attr]
                 Path(os.environ.get("TMPDIR", "/tmp")) / "apex_map_images"
             )
-        _map_cache_dir[0].mkdir(parents=True, exist_ok=True)
-    return _map_cache_dir[0]
+        _get_map_cache_dir._dir.mkdir(parents=True, exist_ok=True)  # type: ignore[union-attr]
+    return _get_map_cache_dir._dir  # type: ignore[union-attr]
+
+
+_get_map_cache_dir._dir: Path | None = None  # type: ignore[union-attr]
 
 
 def _load_font(
@@ -642,6 +623,21 @@ async def _download_image(url: str) -> Image.Image | None:
         return img
 
 
+def _load_and_paste(
+    canvas: Image.Image,
+    url: str,
+    dest_x: int,
+    dest_y: int,
+    size: int,
+) -> None:
+    if not url:
+        return
+    img = _image_cache.get(url)
+    if img:
+        resized = img.resize((size, size), Image.Resampling.LANCZOS)
+        canvas.paste(resized, (dest_x, dest_y), resized)
+
+
 def _draw_shadow_text(
     draw: ImageDraw.ImageDraw,
     xy: tuple[int, int],
@@ -662,10 +658,6 @@ def _draw_progress_ring(
     duration_secs: int,
 ) -> None:
     """绘制圆环进度条：半径 56px，颜色随剩余时间变化，中央显示倒计时。"""
-    _text_white = (255, 255, 255)
-    _ring_green = (47, 161, 108)
-    _ring_orange = (194, 137, 24)
-    _ring_red = (194, 20, 20)
     _five_minutes_s = 300
     _fifteen_minutes_s = 900
 
@@ -677,11 +669,11 @@ def _draw_progress_ring(
         return
     fraction = max(0, min(1, remaining_secs / duration_secs))
     if remaining_secs <= _five_minutes_s:
-        color = _ring_red
+        color = _RING_RED
     elif remaining_secs <= _fifteen_minutes_s:
-        color = _ring_orange
+        color = _RING_ORANGE
     else:
-        color = _ring_green
+        color = _RING_GREEN
     start = 90
     end = 90 + int(360 * fraction)
     arc_bbox = [
@@ -702,7 +694,7 @@ def _draw_progress_ring(
     bb = draw.textbbox((0, 0), time_text, font=font)
     tw, th = int(bb[2] - bb[0]), int(bb[3] - bb[1])
     ty = int(cy - th)
-    _draw_shadow_text(draw, (cx - tw // 2, ty), time_text, font, _text_white)
+    _draw_shadow_text(draw, (cx - tw // 2, ty), time_text, font, _TEXT_WHITE)
 
 
 def _draw_footer(
@@ -712,13 +704,12 @@ def _draw_footer(
     footer_h: int,
     offset: int = 4,
 ) -> None:
-    _text_dim = (110, 118, 130)
     text = "Data from apexlegendsstatus.com"
     font = _load_font(18)
     w = draw.textbbox((0, 0), text, font=font)[2]
     draw.text(
         ((card_w - w) // 2, card_h - footer_h + offset),
-        text, font=font, fill=_text_dim,
+        text, font=font, fill=_TEXT_DIM,
     )
 
 
@@ -743,7 +734,30 @@ def _draw_panel_bg(  # noqa: PLR0913
     draw.rectangle([x, y, x + 4, y + h], fill=accent_color)
 
 
-def _draw_mode_section(  # noqa: C901, PLR0915
+def _cover_fit(img: Image.Image, target_w: int, target_h: int) -> Image.Image:
+    return ImageOps.fit(img, (target_w, target_h), Image.Resampling.LANCZOS)
+
+
+def _gradient_overlay(
+    w: int, h: int, alpha1: float = 0.52, alpha2: float = 0.28,
+) -> Image.Image:
+    # ponytail: numpy-free diagonal gradient via 2x2 bilinear resize
+    mid = int((alpha1 + alpha2) / 2 * 255)
+    data = [
+        int(alpha1 * 255), mid,
+        mid, int(alpha2 * 255),
+    ]
+    img = Image.new("L", (2, 2))
+    img.putdata(data)
+    return img.resize((w, h), Image.Resampling.BILINEAR).convert("RGBA")
+
+
+def _parse_time_str(readable: str) -> str:
+    parts = readable.split(" ")
+    return parts[1][:5] if len(parts) > 1 else readable
+
+
+def _draw_mode_section(  # noqa: PLR0915
     canvas: Image.Image,
     y: int,
     mode_key: str,
@@ -752,32 +766,12 @@ def _draw_mode_section(  # noqa: C901, PLR0915
 ) -> int:
     """渲染一个模式区域（背景/渐变/倒计时/下次预告），返回更新后的 y 坐标。"""
     _utc_plus_8 = timezone(timedelta(hours=8))
-    _text_white = (255, 255, 255)
-    _text_gray = (170, 178, 190)
 
     mode_labels: dict[str, str] = {
         "battle_royale": "大逃杀",
         "ranked": "排位赛",
         "ltm": "混录带",
     }
-
-    def _cover_fit(img: Image.Image, target_w: int, target_h: int) -> Image.Image:
-        return ImageOps.fit(img, (target_w, target_h), Image.Resampling.LANCZOS)
-
-    def _gradient_overlay(
-        w: int, h: int, alpha1: float = 0.52, alpha2: float = 0.28,
-    ) -> Image.Image:
-        xs = np.linspace(0, 1, w, dtype=np.float32)
-        ys = np.linspace(0, 1, h, dtype=np.float32)
-        t = (xs[None, :] + ys[:, None]) / 2
-        alpha = alpha1 * (1 - t) + alpha2 * t
-        overlay = np.zeros((h, w, 4), dtype=np.uint8)
-        overlay[:, :, 3] = (alpha * 255).astype(np.uint8)
-        return Image.fromarray(overlay, "RGBA")
-
-    def _parse_time_str(readable: str) -> str:
-        parts = readable.split(" ")
-        return parts[1][:5] if len(parts) > 1 else readable
 
     current = mode_data.get("current", {})
     next_data = mode_data.get("next", {})
@@ -806,7 +800,7 @@ def _draw_mode_section(  # noqa: C901, PLR0915
         map_name_zh = f"{map_name_zh} · {convert(current['eventName'])}"
     name_font = _load_font(48)
     _draw_shadow_text(
-        draw, (24, section_y + 52), map_name_zh, name_font, _text_white,
+        draw, (24, section_y + 52), map_name_zh, name_font, _TEXT_WHITE,
     )
 
     if current.get("start") and current.get("end"):
@@ -839,7 +833,7 @@ def _draw_mode_section(  # noqa: C901, PLR0915
             next_map_zh = f"{next_map_zh} · {convert(next_data['eventName'])}"
         next_text = f"▶  下次: {next_map_zh}"
         next_font = _load_font(24)
-        _draw_shadow_text(draw, (24, y + 12), next_text, next_font, _text_white)
+        _draw_shadow_text(draw, (24, y + 12), next_text, next_font, _TEXT_WHITE)
 
         if next_data.get("start") and next_data.get("end"):
             ns = datetime.fromtimestamp(int(next_data["start"]), tz=_utc_plus_8)
@@ -857,29 +851,15 @@ def _draw_mode_section(  # noqa: C901, PLR0915
             tw = draw.textbbox((0, 0), time_str, font=time_small)[2]
             draw.text(
                 (card_w - tw - 24, y + 12),
-                time_str, font=time_small, fill=_text_gray,
+                time_str, font=time_small, fill=_TEXT_GRAY,
             )
 
     y += 66
     return y
 
 
-def _save_to_png(img: Image.Image) -> bytes:
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return buf.getvalue()
-
-
-async def render_map_card(data: dict[str, Any]) -> bytes:
+def render_map_card(data: dict[str, Any]) -> bytes:
     card_w = 900
-
-    for mode_key in ("battle_royale", "ranked", "ltm"):
-        mode_data = data.get(mode_key, {})
-        for entry in (mode_data.get("current", {}), mode_data.get("next", {})):
-            asset_url = entry.get("asset", "")
-            if asset_url and asset_url not in _image_cache:
-                await _download_image(asset_url)
-
     card_h = 840
     canvas = Image.new("RGBA", (card_w, card_h), _CARD_BG)
 
@@ -893,7 +873,9 @@ async def render_map_card(data: dict[str, Any]) -> bytes:
     draw = ImageDraw.Draw(canvas)
     _draw_footer(draw, card_w, card_h, 36)
 
-    return _save_to_png(canvas)
+    buf = io.BytesIO()
+    canvas.save(buf, format="PNG")
+    return buf.getvalue()
 
 
 def _draw_status_pill(
@@ -903,7 +885,6 @@ def _draw_status_pill(
     status: str,
     row_h: int,
 ) -> None:
-    _text_dim = (110, 118, 130)
     status_colors: dict[str, tuple[int, int, int]] = {
         "UP": (47, 161, 108),
         "DOWN": (194, 20, 20),
@@ -911,7 +892,7 @@ def _draw_status_pill(
         "OVERLOADED": (194, 20, 20),
     }
     status_zh = convert(status)
-    color = status_colors.get(status, _text_dim)
+    color = status_colors.get(status, _TEXT_DIM)
     font = _load_font(20)
     bb = draw.textbbox((0, 0), status_zh, font=font)
     tw, th = bb[2] - bb[0], bb[3] - bb[1]
@@ -940,8 +921,7 @@ def _compute_server_card_height(
     return max(height, 200)
 
 
-async def render_server_card(sections: list[dict[str, Any]]) -> bytes:
-    _text_white = (255, 255, 255)
+def render_server_card(sections: list[dict[str, Any]]) -> bytes:
     cols = 2
     col_w = 310
     row_h = 42
@@ -951,7 +931,7 @@ async def render_server_card(sections: list[dict[str, Any]]) -> bytes:
     canvas = Image.new("RGBA", (serv_card_w, card_h), _CARD_BG)
     draw: ImageDraw.ImageDraw = ImageDraw.Draw(canvas)
 
-    draw.text((24, 8), "Apex 服务器状态", font=_load_font(38), fill=_text_white)
+    draw.text((24, 8), "Apex 服务器状态", font=_load_font(38), fill=_TEXT_WHITE)
     _draw_footer(draw, serv_card_w, card_h, 26, 0)
 
     y = 56
@@ -961,7 +941,7 @@ async def render_server_card(sections: list[dict[str, Any]]) -> bytes:
             continue
         sec_name = sec["section_name"]
         draw.rectangle([0, y, 4, y + 28 + 12], fill=_ACCENT)
-        draw.text((20, y + 4), sec_name, font=_load_font(28), fill=_text_white)
+        draw.text((20, y + 4), sec_name, font=_load_font(28), fill=_TEXT_WHITE)
         y += 28
         for row_idx in range(0, len(rows), cols):
             row_y = y
@@ -973,7 +953,7 @@ async def render_server_card(sections: list[dict[str, Any]]) -> bytes:
                 col_x = 28 + col * col_w
                 draw.text(
                     (col_x, row_y + 11), item["name"],
-                    font=_load_font(20), fill=_text_white,
+                    font=_load_font(20), fill=_TEXT_WHITE,
                 )
                 sfont = _load_font(20)
                 sw = int(draw.textbbox((0, 0), convert(item["status"]), font=sfont)[2])
@@ -992,7 +972,9 @@ async def render_server_card(sections: list[dict[str, Any]]) -> bytes:
             y += row_h
         y += 4
 
-    return _save_to_png(canvas)
+    buf = io.BytesIO()
+    canvas.save(buf, format="PNG")
+    return buf.getvalue()
 
 
 def _fmt_num(value: int) -> str:
@@ -1007,9 +989,6 @@ def _draw_pred_cell(  # noqa: PLR0913
     cell_w: int,
     row_h: int,
 ) -> None:
-    _text_white = (255, 255, 255)
-    _text_label = (140, 148, 160)
-    _ring_green = (47, 161, 108)
     _pred_score_low = 15000
 
     draw = ImageDraw.Draw(canvas)
@@ -1017,7 +996,7 @@ def _draw_pred_cell(  # noqa: PLR0913
     panel_h = row_h * 3 + 20 * 2
     _draw_panel_bg(draw, x, y, panel_w, panel_h)
     draw.text(
-        (x + 18, y + 16), platform["name"], font=_load_font(28), fill=_text_white,
+        (x + 18, y + 16), platform["name"], font=_load_font(28), fill=_TEXT_WHITE,
     )
 
     row_y = y + 20 + row_h
@@ -1028,24 +1007,23 @@ def _draw_pred_cell(  # noqa: PLR0913
     label_font = _load_font(20)
     val_font = _load_font(22)
     for label, value in rows:
-        draw.text((x + 18, row_y + 3), label, font=label_font, fill=_text_label)
+        draw.text((x + 18, row_y + 3), label, font=label_font, fill=_TEXT_LABEL)
         if label == "猎杀底分" and platform.get("val", 0) > 0:
             vc = (
-                _ring_green
+                _RING_GREEN
                 if platform["val"] <= _pred_score_low
-                else _text_white
+                else _TEXT_WHITE
             )
         elif label == "大师人数" and platform.get("total_masters", 0) <= 0:
-            vc = _text_label
+            vc = _TEXT_LABEL
         else:
-            vc = _text_white
+            vc = _TEXT_WHITE
         vw = draw.textbbox((0, 0), value, font=val_font)[2]
         draw.text((x + panel_w - vw - 18, row_y + 4), value, font=val_font, fill=vc)
         row_y += row_h
 
 
-async def render_predator_card(data: dict[str, Any]) -> bytes:
-    _text_white = (255, 255, 255)
+def render_predator_card(data: dict[str, Any]) -> bytes:
     pred_card_w = 350
     pred_cell_w = 294
     pred_row_h = 34
@@ -1064,7 +1042,7 @@ async def render_predator_card(data: dict[str, Any]) -> bytes:
 
     canvas = Image.new("RGBA", (pred_card_w, card_h), _CARD_BG)
     draw: ImageDraw.ImageDraw = ImageDraw.Draw(canvas)
-    draw.text((24, 8), "Apex 猎杀者", font=_load_font(38), fill=_text_white)
+    draw.text((24, 8), "Apex 猎杀者", font=_load_font(38), fill=_TEXT_WHITE)
 
     start_x = (pred_card_w - pred_cell_w) // 2
     y = pred_header_h + 16
@@ -1074,37 +1052,16 @@ async def render_predator_card(data: dict[str, Any]) -> bytes:
 
     _draw_footer(draw, pred_card_w, card_h, pred_footer_h)
 
-    return _save_to_png(canvas)
+    buf = io.BytesIO()
+    canvas.save(buf, format="PNG")
+    return buf.getvalue()
 
 
-async def _load_and_paste(
-    canvas: Image.Image,
-    url: str,
-    dest_x: int,
-    dest_y: int,
-    size: int,
-) -> None:
-    if not url:
-        return
-    if url not in _image_cache:
-        await _download_image(url)
-    img = _image_cache.get(url)
-    if img:
-        resized = img.resize((size, size), Image.Resampling.LANCZOS)
-        canvas.paste(resized, (dest_x, dest_y), resized)
-
-
-async def render_player_card(  # noqa: PLR0915
+def render_player_card(  # noqa: PLR0915
     player: dict[str, Any],
     changes: dict[str, str] | None = None,
     score_diff: int | None = None,
 ) -> bytes:
-    _text_white = (255, 255, 255)
-    _text_gray = (170, 178, 190)
-    _text_label = (140, 148, 160)
-    _ring_green = (47, 161, 108)
-    _ring_red = (194, 20, 20)
-
     player_card_w = 400
     player_header_h = 48
     player_row_h = 34
@@ -1125,31 +1082,35 @@ async def render_player_card(  # noqa: PLR0915
     canvas = Image.new("RGBA", (player_card_w, card_h), _CARD_BG)
     draw: ImageDraw.ImageDraw = ImageDraw.Draw(canvas)
 
-    draw.text((24, 8), "Apex 玩家信息", font=_load_font(38), fill=_text_white)
+    draw.text((24, 8), "Apex 玩家信息", font=_load_font(38), fill=_TEXT_WHITE)
 
     name = str(player.get("name", "未知"))
     draw.text(
         (28, player_header_h + 10),
-        name, font=_load_font(36), fill=_text_white,
+        name, font=_load_font(36), fill=_TEXT_WHITE,
     )
     sub_font = _load_font(20)
     uid = str(player.get("uid", ""))
     draw.text(
         (32, player_header_h + 50),
         f"UID: {uid or '未知'}",
-        font=sub_font, fill=_text_gray,
+        font=sub_font, fill=_TEXT_GRAY,
     )
     plat = str(player.get("platform", ""))
     draw.text(
         (32, player_header_h + 76),
-        f"平台: {plat or '未知'}", font=sub_font, fill=_text_gray,
+        f"平台: {plat or '未知'}", font=sub_font, fill=_TEXT_GRAY,
     )
 
     y = player_header_h + 110
 
     _draw_panel_bg(draw, 28, y, player_card_w - 56, rank_h + 28)
     rank_img_url = str(player.get("rank_img", ""))
-    await _load_and_paste(canvas, rank_img_url, 44, y + 10, 150)
+    if rank_img_url:
+        img = _image_cache.get(rank_img_url)
+        if img:
+            resized = img.resize((150, 150), Image.Resampling.LANCZOS)
+            canvas.paste(resized, (44, y + 10), resized)
 
     rank_name = str(player.get("rank_name", ""))
     rank_div = player.get("rank_div")
@@ -1161,12 +1122,12 @@ async def render_player_card(  # noqa: PLR0915
     rn_w = draw.textbbox((0, 0), rank_disp, font=rn_font)[2]
     sf_w = draw.textbbox((0, 0), score_text, font=sf_font)[2]
     right_x = player_card_w - 48
-    draw.text((right_x - rn_w, y + 40), rank_disp, font=rn_font, fill=_text_white)
-    draw.text((right_x - sf_w, y + 78), score_text, font=sf_font, fill=_ring_green)
+    draw.text((right_x - rn_w, y + 40), rank_disp, font=rn_font, fill=_TEXT_WHITE)
+    draw.text((right_x - sf_w, y + 78), score_text, font=sf_font, fill=_RING_GREEN)
     if score_diff is not None and score_diff != 0:
         diff_sign = "+" if score_diff > 0 else ""
         diff_text = f"{diff_sign}{score_diff}"
-        diff_color = _ring_green if score_diff > 0 else _ring_red
+        diff_color = _RING_GREEN if score_diff > 0 else _RING_RED
         diff_font = _load_font(22)
         dw = draw.textbbox((0, 0), diff_text, font=diff_font)[2]
         draw.text(
@@ -1199,19 +1160,19 @@ async def render_player_card(  # noqa: PLR0915
         ("群满员", party_full),
         ("状态", state_text or state),
     ]:
-        draw.text((48, data_y), label, font=lfont, fill=_text_label)
+        draw.text((48, data_y), label, font=lfont, fill=_TEXT_LABEL)
         vw = draw.textbbox((0, 0), value, font=vfont)[2]
         vx = player_card_w - 28 - vw - 18
         if label == "状态":
             vc = (
-                _ring_green
+                _RING_GREEN
                 if state in ("在线", "在大厅", "比赛中")
-                else _ring_red
+                else _RING_RED
             )
         elif label in ("在线", "可加入", "群满员"):
-            vc = _ring_green if value == "是" else _text_label
+            vc = _RING_GREEN if value == "是" else _TEXT_LABEL
         else:
-            vc = _text_white
+            vc = _TEXT_WHITE
         draw.text((vx, data_y), value, font=vfont, fill=vc)
         data_y += player_row_h
     y += data_rows * player_row_h + 24 + player_section_gap
@@ -1219,7 +1180,7 @@ async def render_player_card(  # noqa: PLR0915
     if ban_active:
         _draw_panel_bg(
             draw, 28, y, player_card_w - 56, ban_h,
-            accent_color=_ring_red, outline_color=(120, 30, 30, 120),
+            accent_color=_RING_RED, outline_color=(120, 30, 30, 120),
         )
         draw.text((48, y + 10), "封禁", font=_load_font(22), fill=(194, 130, 130))
         ban_secs = player.get("ban_remaining_secs", 0)
@@ -1233,19 +1194,18 @@ async def render_player_card(  # noqa: PLR0915
 
     _draw_footer(draw, player_card_w, card_h, 26)
 
-    return _save_to_png(canvas)
+    buf = io.BytesIO()
+    canvas.save(buf, format="PNG")
+    return buf.getvalue()
 
 
 # ── Handlers ──
-
-def _run_async(afn: Any, *args: Any) -> Any:
-    return asyncio.run(afn(*args))
-
 
 async def _render_or_fallback(
     matcher: Any,
     get_both: Any,
     render: Any,
+    preload: Any = None,
 ) -> None:
     if config.apex_only_text:
         text, _ = await get_both()
@@ -1255,13 +1215,24 @@ async def _render_or_fallback(
     if not data:
         await matcher.finish(text)
         return
+    if preload is not None:
+        await preload(data)
     try:
-        pic = await asyncio.to_thread(_run_async, render, data)
+        pic = await asyncio.to_thread(render, data)
     except Exception:
         logger.exception("Failed to render, falling back to text")
         await matcher.finish(text)
         return
     await matcher.finish(UniMessage.image(raw=pic))
+
+
+async def _preload_map_images(data: dict[str, Any]) -> None:
+    for mode_key in ("battle_royale", "ranked", "ltm"):
+        mode_data = data.get(mode_key, {})
+        for entry in (mode_data.get("current", {}), mode_data.get("next", {})):
+            asset_url = entry.get("asset", "")
+            if asset_url and asset_url not in _image_cache:
+                await _download_image(asset_url)
 
 
 @_map_matcher.handle()
@@ -1270,6 +1241,7 @@ async def apex_map() -> None:
         matcher=_map_matcher,
         get_both=get_map_rotation,
         render=render_map_card,
+        preload=_preload_map_images,
     )
 
 
@@ -1302,18 +1274,6 @@ async def _validate_player_input(
             f"平台参数错误，请输入 {'、'.join(valid_platforms)}"
         )
     return player_name
-
-
-def _extract_player_stats(
-    raw_data: dict[str, Any], platform: str,
-) -> tuple[int, int, str, int | None, str, str]:
-    level = _to_int(raw_data.get("level"), 0) or 0
-    rank_score = _to_int(raw_data.get("rank_score"), 0) or 0
-    rank_name = str(raw_data.get("rank_name") or "")
-    rank_div = _to_int(raw_data.get("rank_div"), None)
-    uid = str(raw_data.get("uid") or "")
-    plat = str(raw_data.get("platform") or platform)
-    return level, rank_score, rank_name, rank_div, uid, plat
 
 
 async def _compare_and_save(  # noqa: PLR0913
@@ -1380,9 +1340,14 @@ async def apex_player(
     except ApexAPIError as e:
         await _player_matcher.finish(str(e))
 
-    level, rank_score, rank_name, rank_div, uid, plat = _extract_player_stats(
-        raw_data, platform,
-    )
+    # 内联 _extract_player_stats
+    level = int(raw_data.get("level") or 0)
+    rank_score = int(raw_data.get("rank_score") or 0)
+    rank_name = str(raw_data.get("rank_name") or "")
+    rank_div_raw = raw_data.get("rank_div")
+    rank_div = int(rank_div_raw) if rank_div_raw is not None else None
+    uid = str(raw_data.get("uid") or "")
+    plat = str(raw_data.get("platform") or platform)
 
     changes, score_diff, stats_text = await _compare_and_save(
         uid, plat, player_name, level, rank_score, rank_name, rank_div, stats_text,
@@ -1391,9 +1356,13 @@ async def apex_player(
     if config.apex_only_text:
         await _player_matcher.finish(stats_text)
 
+    rank_img_url = str(raw_data.get("rank_img", ""))
+    if rank_img_url and rank_img_url not in _image_cache:
+        await _download_image(rank_img_url)
+
     try:
         pic_bytes = await asyncio.to_thread(
-            _run_async, render_player_card, raw_data, changes, score_diff,
+            render_player_card, raw_data, changes, score_diff,
         )
     except Exception:
         logger.exception("Failed to render player card, falling back to text")
