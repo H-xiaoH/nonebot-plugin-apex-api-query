@@ -8,7 +8,7 @@ import os
 import time
 from contextlib import suppress
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -80,6 +80,7 @@ _OTHER_PLATFORMS: dict[str, str] = {
     "Playstation Network": "Playstation-Network",
     "Xbox Live": "Xbox-Live",
 }
+
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +180,7 @@ async def save_record(
             rank_score=stats.rank_score,
             rank_name=stats.rank_name,
             rank_div=stats.rank_div,
-            created_at=datetime.now(tz=UTC),
+            created_at=datetime.now(tz=timezone.utc),
         )
         session.add(record)
         await session.commit()
@@ -274,7 +275,15 @@ def format_player_stats(player_info: dict[str, Any]) -> str:
 
 def _get_client() -> httpx.AsyncClient:
     if _get_client._client is None:  # type: ignore[union-attr]
-        _get_client._client = httpx.AsyncClient(timeout=httpx.Timeout(30.0))  # type: ignore[union-attr]
+        _get_client._client = httpx.AsyncClient(
+            timeout=httpx.Timeout(30.0),
+            headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Referer": "https://apexlegendsstatus.com/",
+            }
+        )  # type: ignore[union-attr]
     return _get_client._client  # type: ignore[union-attr]
 
 
@@ -300,7 +309,9 @@ async def query_apex_api(
     if params:
         payload.update(params)
     base = base_url or config.apex_api_url
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    ) as client:
         return await client.get(f"{base}/{server}", params=payload, timeout=30)
 
 
@@ -401,12 +412,7 @@ async def get_player_stats(
 
 
 async def get_map_rotation_data() -> dict[str, Any]:
-    cached = await _map_rotation_cache.get("maprotation")
-    if cached is not None:
-        return cached
-    data = await _fetch("maprotation", {"version": "2"})
-    await _map_rotation_cache.set("maprotation", data)
-    return data
+    return await _fetch("maprotation", {"version": "2"})
 
 
 async def get_map_rotation() -> tuple[str, dict[str, Any]]:
@@ -468,12 +474,8 @@ async def _traverse_server_sections(
 
 
 async def get_server_status_data() -> list[dict[str, Any]]:
-    cached = await _server_status_cache.get("servers")
-    if cached is not None:
-        return cached
     response_data = await _fetch("servers")
     sections = await _traverse_server_sections(response_data)
-    await _server_status_cache.set("servers", sections)
     return sections
 
 
@@ -486,9 +488,6 @@ async def get_server_status() -> tuple[str, list[dict[str, Any]]]:
 
 
 async def get_predator_data() -> dict[str, Any]:
-    cached = await _predator_cache.get("predator")
-    if cached is not None:
-        return cached
     platform_display: dict[str, str] = {
         "PC": "PC 端",
         "PS4": "PS4/5 端",
@@ -507,7 +506,6 @@ async def get_predator_data() -> dict[str, Any]:
             "uid": platform_data.get("uid", ""),
             "total_masters": platform_data.get("totalMastersAndPreds", 0),
         }
-    await _predator_cache.set("predator", result)
     return result
 
 
@@ -611,7 +609,7 @@ async def _download_image(url: str) -> Image.Image | None:
             img = img.convert("RGBA")
         img.load()
     except httpx.HTTPStatusError as e:
-        logger.debug("HTTP %d for image: %s", e.response.status_code, url)
+        logger.warning("HTTP %d for image: %s", e.response.status_code, url)
         return None
     except Exception:
         logger.exception("Failed to download image: %s", url)
@@ -738,20 +736,6 @@ def _cover_fit(img: Image.Image, target_w: int, target_h: int) -> Image.Image:
     return ImageOps.fit(img, (target_w, target_h), Image.Resampling.LANCZOS)
 
 
-def _gradient_overlay(
-    w: int, h: int, alpha1: float = 0.52, alpha2: float = 0.28,
-) -> Image.Image:
-    # ponytail: numpy-free diagonal gradient via 2x2 bilinear resize
-    mid = int((alpha1 + alpha2) / 2 * 255)
-    data = [
-        int(alpha1 * 255), mid,
-        mid, int(alpha2 * 255),
-    ]
-    img = Image.new("L", (2, 2))
-    img.putdata(data)
-    return img.resize((w, h), Image.Resampling.BILINEAR).convert("RGBA")
-
-
 def _parse_time_str(readable: str) -> str:
     parts = readable.split(" ")
     return parts[1][:5] if len(parts) > 1 else readable
@@ -786,8 +770,6 @@ def _draw_mode_section(  # noqa: PLR0915
     if map_img:
         map_bg = _cover_fit(map_img, card_w, 200)
         canvas.paste(map_bg, (0, section_y), map_bg)
-    overlay = _gradient_overlay(card_w, 200)
-    canvas.paste(overlay, (0, section_y), overlay)
 
     _draw_shadow_text(
         draw, (24, section_y + 24),
