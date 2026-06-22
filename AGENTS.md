@@ -83,3 +83,5 @@ APEX_ONLY_TEXT = False    # 设为 True 跳过图片渲染
 
 ## CI / 发布
 推送到 `main` 分支 → Poetry 构建 → 发布到 PyPI（OIDC 可信发布，`pypa/gh-action-pypi-publish@release/v1`）。无需 API 令牌。版本约定：`26.6.14`（基于日期）。`tests.yml` 在 push/PR 时运行。
+
+**版本管理规则：** 每次推送前必须将 `pyproject.toml` 中的 `version` 字段更新为当天日期（格式 `YY.M.D`，如 `26.6.22`），确保 PyPI 发布时版本号唯一且语义化。
