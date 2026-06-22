@@ -86,7 +86,7 @@ APEX_ONLY_TEXT = False    # 设为 True 跳过图片渲染
 
 **版本管理规则：** 每次推送前必须将 `pyproject.toml` 中的 `version` 字段更新为当天日期（格式 `YY.M.D`，如 `26.6.22`），确保 PyPI 发布时版本号唯一且语义化。
 
-**Commit 格式规则：** 使用 `emoji type: 中文描述` 格式，emoji 和 type 之间不加空格。例如：
+**Commit 格式规则：** 使用 `emoji type: 中文描述` 格式，emoji 和 type 之间加空格。例如：
 - `📌 bump: 版本号更新至 26.6.22`
 - `♻️ refactor: 重构代码结构，移除 numpy 依赖`
 - `📝 docs: 添加版本管理规则`
