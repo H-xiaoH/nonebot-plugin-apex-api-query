@@ -85,3 +85,12 @@ APEX_ONLY_TEXT = False    # 设为 True 跳过图片渲染
 推送到 `main` 分支 → Poetry 构建 → 发布到 PyPI（OIDC 可信发布，`pypa/gh-action-pypi-publish@release/v1`）。无需 API 令牌。版本约定：`26.6.14`（基于日期）。`tests.yml` 在 push/PR 时运行。
 
 **版本管理规则：** 每次推送前必须将 `pyproject.toml` 中的 `version` 字段更新为当天日期（格式 `YY.M.D`，如 `26.6.22`），确保 PyPI 发布时版本号唯一且语义化。
+
+**Commit 格式规则：** 使用 `emoji type: 中文描述` 格式，emoji 和 type 之间不加空格。例如：
+- `📌 bump: 版本号更新至 26.6.22`
+- `♻️ refactor: 重构代码结构，移除 numpy 依赖`
+- `📝 docs: 添加版本管理规则`
+- `🌐 i18n: 添加离线和大厅状态翻译`
+- `🔥 chore: 移除 CI 测试工作流`
+
+type 对应关系：`bump`（版本更新）、`refactor`（重构）、`feat`（新功能）、`fix`（修复）、`docs`（文档）、`chore`（杂项）、`i18n`（国际化）等。
