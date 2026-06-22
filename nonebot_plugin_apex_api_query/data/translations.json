@@ -162,5 +162,10 @@
   "0": "否",
   "1": "是",
   "true": "是",
-  "false": "否"
+  "false": "否",
+  "Offline": "离线",
+  "In lobby": "在大厅",
+  "In match": "在比赛中",
+  "in match": "在比赛中",
+  "in lobby": "在大厅"
 }
