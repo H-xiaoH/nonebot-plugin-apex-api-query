@@ -92,6 +92,7 @@ plugins = ["nonebot_plugin_apex_api_query"]
 ```env
 APEX_API_KEY = "你的 API 密钥"
 # 以下均为可选配置
+APEX_API_URL = "https://api.apexlegendsstatus.com"
 APEX_ONLY_TEXT = False
 ```
 
