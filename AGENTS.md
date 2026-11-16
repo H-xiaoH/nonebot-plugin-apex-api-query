@@ -1,88 +1,51 @@
 # AGENTS.md — nonebot-plugin-apex-api-query
 
-本仓库 OpenCode 会话的快速入门指南。这是一个 3 文件 + JSON 翻译的 NoneBot2 插件，通过单一 API 主机查询 Apex Legends 数据并渲染图片卡片。
+默认用中文回复；代码标识、命令和日志保留原文。
 
-## 快速开始
+## 开发与验证
+
 ```bash
-poetry install
-# 插件仅在运行中的 NoneBot2 机器人内加载。
+poetry install --with dev
+poetry run python -m unittest discover -s tests -v
 ```
 
-## 架构
-单包 NoneBot2 插件，3 个 .py 文件 + JSON 翻译 + 字体目录。
+插件需要在初始化后的 NoneBot 中加载。真实平台连接、API 密钥和 htmlrender 配置见 README.md 的配置章节；测试使用隔离配置，不读取本机机器人的密钥。
 
-| 文件 | 用途 |
-|---|---|
-| `__init__.py` | 插件入口：Alconna 命令、4 个处理器、API 客户端（httpx）、数据获取、图片渲染（PIL+numpy）、缓存（AsyncTTLCache）、数据库读写、历史数据对比（约 1400 行单体文件） |
-| `config.py` | Pydantic `Config` 模型 — `get_plugin_config(Config)` 调用，`field_validator` 校验 API 密钥 |
-| `models.py` | SQLAlchemy ORM 模型 `PlayerStats` (`apex_player_stats`)，索引 `idx_uid_platform`，`rank_div` 可为空 |
-| `data/translations.json` | JSON 翻译字典（替代原 `data.py`），游戏内容中文翻译，通过 `convert()` 函数首次调用时懒加载 |
-| `fonts/` | `NotoSansSC-VariableFont_wght.ttf`（可变字重） |
+## 代码入口
 
-入口点：`apex_api_query = "nonebot_plugin_apex_api_query"` (pyproject.toml:29)
+- `nonebot_plugin_apex_api_query/__init__.py`：Alconna 命令、API 数据校验、缓存、历史对比和异步卡片渲染。
+- `config.py`：Pydantic 配置。省略、空字符串和纯空白 `APEX_API_KEY` 都必须拒绝加载。
+- `models.py`：历史表 `PlayerStats` 和绑定表 `PlayerBinding`；历史的 `rank_div`、`prestige` 可空。
+- `bindings.py`：按聊天用户读写绑定；适配器、底层平台、机器人 ID 组成命名空间，群聊和私聊共享。
+- `templates/`：htmlrender + Playwright 使用的五个 HTML 模板；字体在 `fonts/`，翻译在 `data/translations.json`。
 
-## API 端点
-| 配置键 | 默认值 | 用途 |
-|---|---|---|
-| `apex_api_url` | `https://api.apexlegendsstatus.com` | 所有查询（玩家/地图/服务器/顶猎）共享此单一主机 |
+## 查询与消息
 
-`_fetch()` 函数处理所有 API 调用，使用统一的错误处理模式：网络错误、非 200 状态码、JSON 解析失败均抛出 `ApexAPIError`。
+`/apex` 和 `.apex` 支持玩家、map/m/地图、server/s/服务器、predator/p/顶猎。API 查询共享配置的单一主机。
 
-## 必须配置
-`APEX_API_KEY` 在**插件加载时必须提供**。`Config` 模型的 `field_validator` 在为空时抛出 `MissingAPIKeyError` — 插件将无法加载。
-```env
-APEX_API_KEY = "your-key"
-APEX_API_URL = "https://api.apexlegendsstatus.com"
-APEX_ONLY_TEXT = False    # 设为 True 跳过图片渲染
-```
+`bind/绑定 <名称> [平台]`、`binduid/绑定UID <UID> [平台]` 验证后保存一个账号；`bind/绑定` 查看，`unbind/解绑` 删除绑定。无参数 `/apex` 查询自己的绑定；绑定按 UID 查询，纯数字名称仍按名称处理。API 失败不得覆盖现有绑定。
 
-## 命令流程
-使用 `nonebot_plugin_alconna`（`Alconna(["/", "."], "apex", ...)` + `on_alconna`）。支持 `/apex` 和 `.apex` 前缀，通过 `dispatch` 分发子命令：
-- `$main` → 玩家数据（需要玩家名称参数）
-- `map` / `m` / `地图` → 地图轮换
-- `server` / `s` / `服务器` → 服务器状态
-- `predator` / `p` / `顶猎` → 顶猎排行
+- `_fetch()` 将网络错误、非 200、无效 JSON 和非对象响应转成 `ApexAPIError`。
+- 玩家必需的 UID、等级、段位和分数先校验，再生成输出及保存历史；缺失值不能当作真实零值。
+- `APEX_ONLY_TEXT=True` 跳过渲染。渲染、严格图片导出或发送失败时返回完整文字。
+- 图片通过 `UniMessage` 发送，禁止静默退化为 `[image]` 占位符。适配器由机器人安装、注册，OneBot 仅为开发依赖。
 
-`ErrorLogExtension` 处理未解析的依赖名称，记录警告并返回默认值。
+## 历史与缓存
 
-**统一回退模式（map/server/predator 处理器使用 `_render_or_fallback()`）：**
-1. 检查 `config.apex_only_text` → 若为 True 则跳过渲染
-2. 获取结构化数据（含文本）
-3. 数据为空 → 直接返回文本
-4. 尝试 PIL 渲染 → `asyncio.to_thread(_run_async, render_fn, data)`
-5. 出现异常 → 记录警告，回退到纯文本输出
+- 使用 ORM 异步会话读写。默认关闭 Alembic 检查，沿用 ORM 启动时自动同步模式。
+- ORM 的 SQLite extra 是运行依赖；默认使用 localstore 管理的 ORM 数据库，保持用户自定义数据库配置和旧历史记录。
+- 修改模型后验证旧表迁移并保留旧记录；本机数据库变更前备份。
+- 等级比较使用 `prestige * 500 + level`。旧记录没有转生层级时跳过等级对比，分数和段位仍可比较。
+- 单进程内按 UID、平台串行读取、比较、保存历史，以查询开始时间拒绝迟到旧结果写入或比较；多进程共享数据库需另行提供跨进程保护。
+- 地图、服务器和顶猎分别缓存 60、30、300 秒；同一端点的并发缓存未命中合并为一次请求，失败结果不缓存。
+- 图片持久化在 `get_plugin_data_dir()/card_images`，键为 URL 的 SHA-256；404/410 缓存一小时。
+- 可选图片每张总下载预算 10 秒、上限 8 MiB；失败时使用背景或默认头像回退。
 
-**玩家处理器例外：** `apex_player` 有自己内联的 `apex_only_text` 检查和渲染逻辑（不使用 `_render_or_fallback`），因为在渲染前需要先进行历史数据对比和保存。
+## 测试与发布
 
-所有处理器通过 `UniMessage.image(raw=pic_bytes)` 发送图片（适配器无关，非 OneBot 专用）。
-
-## 数据库
-使用 `nonebot_plugin_orm`（SQLAlchemy 异步）。表 `apex_player_stats` 在启动时自动创建。`os.environ.setdefault("ALEMBIC_STARTUP_CHECK", "false")` 禁用 Alembic 迁移检查。索引：`idx_uid_platform` 基于 `(uid, platform)`。`rank_div` 字段可为空（`int | None`）。
-
-`get_session()` 上下文管理器用于所有数据库读写。玩家数据通过 `get_latest_record()` 查询历史记录，`save_record()` 持久化新记录，`format_comparison()` 对比当前与上一次数据生成变化标记。
-
-## 图片渲染
-- 字体：`Path(__file__).parent / "fonts" / "NotoSansSC-VariableFont_wght.ttf"` — 通过 `font.setvaraxes([weight])` 支持可变字重。字体缺失时回退到 PIL 默认字体。
-- 字体缓存：`_font_cache` 字典，按 `(size, weight)` 键缓存。
-- 地图图片通过 `get_plugin_data_dir() / "map_images"` 缓存到磁盘（重启后持久保留），同时维护内存 `_image_cache` 字典。
-- 使用 PIL + numpy（用于地图卡片渐变叠加）。
-- **所有 4 种卡片类型均通过 `_draw_footer()` 绘制 "Data from apexlegendsstatus.com" 脚注**：`render_player_card`、`render_map_card`、`render_server_card`、`render_predator_card`。
-
-## 翻译
-游戏内容翻译以 JSON 字典形式存放在 `data/translations.json` 中（166 行）。`convert()` 函数在首次调用时懒加载该 JSON 文件（通过 `hasattr` 检查），无对应翻译时返回原始键名。无外部国际化框架。添加翻译只需编辑 JSON 文件追加条目。
-
-## 缓存
-`AsyncTTLCache` 类 — 基于 TTL 的异步缓存，使用 `asyncio.Lock` 保证并发安全。过期条目在下次访问时自动清除。
-
-三个实例，不同 TTL：
-- `get_map_rotation_data._cache` — 60 秒
-- `get_server_status_data._cache` — 30 秒
-- `get_predator_data._cache` — 300 秒（5 分钟）
-
-缓存数据命中时立即返回，无需发起 API 请求。
-
-## CI / 发布
-推送到 `main` 分支 → Poetry 构建 → 发布到 PyPI（OIDC 可信发布，`pypa/gh-action-pypi-publish@release/v1`）。无需 API 令牌。版本约定：`26.6.14`（基于日期）。`tests.yml` 在 push/PR 时运行。
+- `tests/bootstrap.py` 加载真实插件；`tests/runtime_check.py` 在独立进程验证旧 SQLite 表迁移、ORM 历史、并发和 Console 命令。
+- 浏览器及真实 API 的验证属于额外集成检查；无网络的测试套件不启动浏览器。
+- `.github/workflows/publish.yml` 在 PR 和 main 推送运行 Python 3.10、3.12 测试；仅 main 推送且测试全部通过才构建并通过 OIDC 发布 PyPI。
 
 **版本管理规则：** 每次推送前必须将 `pyproject.toml` 中的 `version` 字段更新为当天日期（格式 `YY.M.D`，如 `26.6.22`），确保 PyPI 发布时版本号唯一且语义化。
 
