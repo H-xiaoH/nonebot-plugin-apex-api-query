@@ -270,3 +270,5 @@ $RECYCLE.BIN/
 
 # OpenCode working directory
 .omo/
+# Local NoneBot runtime
+.runtime/
