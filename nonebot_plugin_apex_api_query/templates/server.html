@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}<main>
+{% for section in sections if section.rows %}<section class="panel"><h2>{{ section.section_name }}</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px">
+{% for row in section.rows %}<div style="display:flex;gap:8px;align-items:center;min-width:0;font-size:17px"><span style="flex:1;overflow-wrap:anywhere">{{ row.name }}</span>{% if row.response_time is not none and row.response_time >= 0 %}<span class="muted" style="font-size:14px">{{ row.response_time }}ms</span>{% endif %}<span style="flex-shrink:0;border-radius:4px;padding:3px 8px;background:{{ {'UP':'#21513c','DOWN':'#6c2428','SLOW':'#6b501c','OVERLOADED':'#6c2428'}.get(row.status,'#34383e') }};color:#fff">{{ row.status|convert or '未知' }}</span></div>{% endfor %}
+</div></section>{% endfor %}
+</main>{% endblock %}

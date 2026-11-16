@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% macro number(value) %}{{ '{:,}'.format(value) if value is not none and value >= 0 else '未知' }}{% endmacro %}
+{% block content %}<main>{% for platform in platforms %}<section class="panel"><h2>{{ platform.name }}</h2><div class="row"><span class="label">猎杀底分</span><strong class="value">{{ number(platform.val) }} RP</strong></div><div class="row"><span class="label">大师及猎杀人数</span><span class="value">{{ number(platform.total_masters) }}</span></div></section>{% endfor %}</main>{% endblock %}

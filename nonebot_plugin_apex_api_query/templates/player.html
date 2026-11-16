@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+.player-card { position:relative; overflow:hidden; padding-top:20px; }
+.player-backdrop { position:absolute; top:0; left:0; width:100%; height:540px; object-fit:cover; object-position:center 25%; }
+.player-shade { position:absolute; inset:0; background:linear-gradient(180deg,rgba(18,20,24,.25),rgba(18,20,24,.65) 200px,#181818 540px); }
+.player-content { position:relative; }
+.player-hero { min-height:210px; display:flex; flex-direction:column; justify-content:flex-end; padding:16px 4px 24px; text-shadow:0 2px 6px #000; }
+.player-hero .muted { color:#e1e5eb; }
+.player-identity { display:flex; align-items:center; gap:14px; }
+.player-avatar { width:72px; height:72px; flex-shrink:0; border-radius:12px; object-fit:cover; border:1px solid rgba(255,255,255,.3); background:#262c34; }
+.no-banner .player-hero { min-height:0; }
+.player-content .panel { background:rgba(18,20,24,.9); }
+.skin { overflow-wrap:anywhere; color:#d7dce4; }
+.tracker { padding:12px 0; border-top:1px solid #34383e; }
+.tracker strong { font-size:26px; font-variant-numeric:tabular-nums; }
+</style>
+<main class="player-card{% if not player.legend_banner %} no-banner{% endif %}">
+{% if player.legend_banner %}<img class="player-backdrop" src="{{ player.legend_banner }}" alt="">{% endif %}
+<div class="player-shade"></div><div class="player-content">
+<div class="player-hero"><div class="player-identity">
+{% if player.avatar %}<img class="player-avatar" src="{{ player.avatar }}" alt="">{% else %}
+<svg class="player-avatar" viewBox="0 0 72 72" role="img" aria-label="默认头像"><circle cx="36" cy="26" r="12" fill="#aab2be"/><path d="M14 64v-6a22 22 0 0 1 44 0v6" fill="#aab2be"/></svg>
+{% endif %}
+<div style="min-width:0"><div class="name">{{ player.name or '未知' }}</div><div class="muted">UID: {{ player.uid or '未知' }}<br>平台: {{ player.platform or '未知' }}</div></div>
+</div></div>
+<section class="panel" style="display:flex;align-items:center;gap:18px">
+{% if player.rank_img %}<img src="{{ player.rank_img }}" width="110" height="110" style="object-fit:contain">{% endif %}
+<div style="flex:1;min-width:0;text-align:right"><h2>{{ player.rank_display or player.rank_name or '未知' }}</h2>
+{% if changes.get('大逃杀段位') %}<div class="change">上次 {{ changes['大逃杀段位'] }}</div>{% endif %}
+<div>{{ player.rank_score if player.rank_score is not none else '未知' }} 分</div>
+{% if score_diff %}<div class="{{ 'good' if score_diff > 0 else 'bad' }}">{{ '%+d'|format(score_diff) }}</div>{% endif %}</div></section>
+{% if player.ranked_season or player.global_rank_pct is defined and player.global_rank_pct is not none %}
+<section class="panel">
+{% if player.ranked_season %}<div class="row"><span class="label">排位赛季</span><span class="value">{{ player.ranked_season }}</span></div>{% endif %}
+{% if player.global_rank_pct is defined and player.global_rank_pct is not none %}<div class="row"><span class="label">ALS 收录玩家排名</span><span class="value">前 {{ player.global_rank_pct }}%</span></div>{% endif %}
+</section>{% endif %}
+<section class="panel">
+<div class="row"><span class="label">等级</span><span class="value">{{ player.level if player.level is not none else '未知' }}{% if player.to_next_level_pct is defined and player.to_next_level_pct is not none %} ({{ player.to_next_level_pct }}%){% endif %} <span class="change">{{ changes.get('等级','') }}</span></span></div>
+{% for label,key in [('转生等级','prestige'),('战斗通行证等级','battlepass_level')] %}{% if player.get(key) is not none %}<div class="row"><span class="label">{{ label }}</span><span class="value">{{ player[key] }}</span></div>{% endif %}{% endfor %}
+{% for label,key in [('大厅','lobby_state'),('在线','is_online'),('可加入','can_join'),('队伍已满','party_full'),('状态','state_as_text')] %}
+<div class="row"><span class="label">{{ label }}</span><span class="value">{{ player.get(key) or (player.get('current_state') if key == 'state_as_text' else '') or '未知' }}</span></div>
+{% endfor %}</section>
+{% if player.selected_legend or player.tracker_legend or player.legend_skin or player.trackers %}
+<section class="panel"><h2>{{ player.tracker_legend or player.selected_legend or '当前传奇' }}</h2>
+{% if player.legend_skin %}
+{% set skin_color = {'common':'#d7dce4','rare':'#70b9ff','epic':'#d8a0ff','legendary':'#ffd166','mythic':'#ff7777'}.get(player.get('legend_skin_rarity','')|lower, '#d7dce4') %}
+<div class="label">当前皮肤</div><div class="skin" style="margin-bottom:14px;color:{{ skin_color }}">{{ player.legend_skin }}</div>{% endif %}
+{% if player.trackers %}<div class="label" style="margin:12px 0">已装备追踪器</div>
+{% for tracker in player.trackers %}<div class="row tracker"><span class="label">{{ tracker.name }}</span><strong class="value">{{ '{:,}'.format(tracker.value) }}</strong></div>{% endfor %}
+<div class="muted" style="font-size:15px;margin-top:10px">追踪器数据不代表完整生涯统计</div>{% endif %}
+</section>{% endif %}
+{% if player.ban_is_active %}<section class="panel"><h2 class="bad">封禁中</h2><div>剩余秒数: {{ player.ban_remaining_secs if player.ban_remaining_secs is not none else '未知' }}</div><div class="value">{{ player.ban_reason or '原因未知' }}</div></section>{% endif %}
+</div></main>{% endblock %}

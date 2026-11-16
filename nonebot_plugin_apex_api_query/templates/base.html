@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Apex; src: url('{{ font }}'); font-weight: 100 900; }
+* { box-sizing: border-box; }
+html,body { margin:0; background:#181818; color:#f4f4f4; font-family:Apex,sans-serif; font-size:20px; line-height:1.5; }
+header { border-top:5px solid #da3134; padding:20px 26px 18px; }
+h1 { margin:0; font-size:32px; font-weight:750; }
+h2 { margin:0 0 14px; font-size:24px; font-weight:650; }
+main { padding:0 26px; }
+.panel { background:#121418; border:1px solid #3c4048; border-left:4px solid #da3134; padding:20px; margin-bottom:16px; border-radius:6px; }
+.row { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:6px 0; }
+.label,.muted { color:#aab2be; }
+.value { text-align:right; overflow-wrap:anywhere; min-width:0; }
+.good { color:#58d49b; } .bad { color:#ff7b7b; } .change { color:#aab2be; font-size:17px; }
+footer { padding:12px 16px 18px; color:#8a929e; font-size:16px; text-align:center; }
+.name { overflow-wrap:anywhere; font-size:32px; font-weight:700; }
+</style></head><body>
+<header><h1>{{ title }}</h1></header>
+{% block content %}{% endblock %}
+<footer>Data from apexlegendsstatus.com</footer>
+</body></html>

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}<main>
+{% for mode in modes %}<section class="panel" style="padding:0;overflow:hidden">
+<div style="position:relative;min-height:220px;padding:24px">
+{% if mode.current.asset %}<img src="{{ mode.current.asset }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">{% endif %}
+<div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.45),rgba(0,0,0,.08))"></div>
+<div style="position:relative;text-shadow:0 2px 5px rgba(0,0,0,.9)"><div style="color:#ff797b;font-weight:700">{{ mode.label }}</div><div class="name" style="font-size:38px;margin:6px 0">{{ mode.current.map|convert }}{% if mode.current.eventName %} · {{ mode.current.eventName|convert }}{% endif %}</div><div>{{ mode.time_range }}</div><div class="row"><span>剩余 {{ mode.current.remainingTimer or '未知' }}</span></div></div>
+</div><div style="height:4px;background:#34383e"><div style="width:{{ mode.progress }}%;height:100%;background:#da3134"></div></div>
+{% if mode.next %}<div style="padding:16px 24px;overflow-wrap:anywhere">下一张: {{ mode.next.map|convert }}{% if mode.next.eventName %} · {{ mode.next.eventName|convert }}{% endif %}</div>{% endif %}
+</section>{% endfor %}</main>{% endblock %}
