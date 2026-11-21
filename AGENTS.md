@@ -14,7 +14,7 @@ poetry run python -m unittest discover -s tests -v
 ## 代码入口
 
 - `nonebot_plugin_apex_api_query/__init__.py`：Alconna 命令、API 数据校验、缓存、历史对比和异步卡片渲染。
-- `config.py`：Pydantic 配置。省略、空字符串和纯空白 `APEX_API_KEY` 都必须拒绝加载。
+- `config.py`：Pydantic 配置。省略、空字符串和纯空白 `APEX_API_KEY` 都允许加载；启动时异步检查可用性，认证失败只记录脱敏日志，聊天命令回复“API密钥不可用”。网络故障、限流和服务端错误不得误判为密钥无效。
 - `models.py`：历史表 `PlayerStats` 和绑定表 `PlayerBinding`；历史的 `rank_div`、`prestige` 可空。
 - `bindings.py`：按聊天用户读写绑定；适配器、底层平台、机器人 ID 组成命名空间，群聊和私聊共享。
 - `templates/`：htmlrender + Playwright 使用的五个 HTML 模板；字体在 `fonts/`，翻译在 `data/translations.json`。

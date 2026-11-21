@@ -19,6 +19,7 @@ from weakref import WeakValueDictionary
 import httpx
 from nonebot import get_driver, require
 from nonebot.adapters import Bot, Event
+from nonebot.matcher import Matcher
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 
 os.environ.setdefault("ALEMBIC_STARTUP_CHECK", "false")
@@ -80,6 +81,8 @@ _OTHER_PLATFORMS: dict[str, str] = {
 
 
 logger = logging.getLogger(__name__)
+
+_api_key_available: bool | None = None
 
 driver = get_driver()
 __plugin_meta__ = PluginMetadata(
@@ -304,12 +307,12 @@ async def query_apex_api(
     params: dict[str, Any] | None = None,
     base_url: str | None = None,
 ) -> httpx.Response:
-    payload: dict[str, Any] = {"auth": config.apex_api_key}
+    payload: dict[str, Any] = {}
     if params:
         payload.update(params)
     base = base_url or config.apex_api_url
     async with httpx.AsyncClient(
-        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        headers={"Authorization": config.apex_api_key, "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
     ) as client:
         return await client.get(f"{base}/{server}", params=payload, timeout=30)
 
@@ -319,16 +322,23 @@ async def _fetch(
     params: dict[str, Any] | None = None,
     base_url: str | None = None,
 ) -> dict[str, Any]:
+    global _api_key_available
+    if not config.apex_api_key:
+        _api_key_available = False
+        logger.warning("API密钥不可用：未配置 APEX_API_KEY")
+        raise ApexAPIError("API密钥不可用")
     try:
         response = await query_apex_api(endpoint, params, base_url)
     except httpx.HTTPError as e:
-        logger.exception("Failed to query %s", endpoint)
+        logger.warning("API %s network request failed", endpoint)
         raise ApexAPIError("查询失败: 网络请求错误") from e  # noqa: TRY003
-    if response.status_code != 200:  # noqa: PLR2004
-        logger.warning(
-            "API %s returned %d: %s", endpoint, response.status_code, response.text
-        )
-        raise ApexAPIError(response.text)
+    if response.status_code in (401, 403):
+        _api_key_available = False
+        logger.warning("API密钥不可用：认证失败（HTTP %d）", response.status_code)
+        raise ApexAPIError("API密钥不可用")
+    if response.status_code != 200:
+        logger.warning("API %s returned HTTP %d", endpoint, response.status_code)
+        raise ApexAPIError(f"查询失败: API 返回 HTTP {response.status_code}，请稍后重试")
     try:
         data = response.json()
     except json.JSONDecodeError as e:
@@ -336,7 +346,17 @@ async def _fetch(
         raise ApexAPIError("查询失败: API 返回数据格式错误") from e  # noqa: TRY003
     if not isinstance(data, dict):
         raise ApexAPIError("查询失败: API 返回数据结构错误")
+    _api_key_available = True
     return data
+
+
+@driver.on_startup
+async def check_api_key() -> None:
+    try:
+        await _fetch("servers")
+    except ApexAPIError:
+        if _api_key_available is not False:
+            logger.warning("暂时无法检查 API 密钥，请稍后重试查询")
 
 
 def _mapping(value: Any) -> dict[str, Any]:
@@ -686,6 +706,17 @@ _predator_matcher = apex.dispatch("predator")
 _bind_matcher = apex.dispatch("bind")
 _bind_uid_matcher = apex.dispatch("binduid")
 _unbind_matcher = apex.dispatch("unbind")
+
+
+async def _check_command_api_key(matcher: Matcher) -> None:
+    if not config.apex_api_key or _api_key_available is False:
+        await matcher.finish("API密钥不可用")
+
+
+for _matcher in (_player_matcher, _map_matcher, _server_matcher, _predator_matcher,
+                 _bind_matcher, _bind_uid_matcher, _unbind_matcher):
+    _matcher.handle()(_check_command_api_key)
+
 
 
 # ── HTML rendering ──

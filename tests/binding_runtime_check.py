@@ -148,6 +148,13 @@ async def main():
             await driver._lifespan.startup()
             assert 'UID: 1002' in await command('/apex bind')
             assert '名称: Beta' in await command('/apex')
+        for available, key in ((False, 'invalid-test-key'), (None, '')):
+            with patch.object(p, '_api_key_available', available), patch.object(p.config, 'apex_api_key', key), \
+                    patch.object(p, 'query_apex_api', AsyncMock()) as request:
+                for text in ('/apex', '/apex Alpha', '/apex map', '/apex server', '/apex predator',
+                             '/apex bind Alpha', '/apex binduid 1001', '/apex bind', '/apex unbind'):
+                    assert 'API密钥不可用' in await command(text)
+                request.assert_not_awaited()
         print('PASS name/UID binding, user/bot isolation, rename, rebind, unbind, restart and localstore database')
     finally:
         for bot in bots.values():

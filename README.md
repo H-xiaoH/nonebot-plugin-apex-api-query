@@ -81,7 +81,7 @@ plugins = ["nonebot_plugin_apex_api_query"]
 
 | 配置项 | 类型 | 必填 | 默认值 | 说明 |
 |--------|------|------|--------|------|
-| `APEX_API_KEY` | str | **是** | `""` | Apex API 密钥，必须填写 |
+| `APEX_API_KEY` | str | 查询时必填 | `""` | Apex API 密钥；未配置时仍可加载插件 |
 | `APEX_API_URL` | str | 否 | `https://api.apexlegendsstatus.com` | API 地址（玩家/地图/服务器/顶猎共用） |
 | `APEX_ONLY_TEXT` | bool | 否 | `False` | 是否仅使用纯文本输出（不渲染图片） |
 
@@ -93,7 +93,9 @@ APEX_API_KEY = "你的 API 密钥"
 APEX_ONLY_TEXT = False
 ```
 
-> `APEX_API_KEY` 不能省略、留空或只填空格，否则插件无法加载。设置 `APEX_ONLY_TEXT = True` 后，所有查询仅返回文字，不渲染卡片。
+> 插件允许省略、留空或只填空格的 `APEX_API_KEY`，但此时无法查询。启动时会请求服务器状态接口检查密钥；未配置或认证失败时只记录日志，不阻止启动，聊天命令统一回复“API密钥不可用”。修改密钥后需重启机器人。网络故障、限流或服务端错误不会被判为密钥无效，可在稍后查询时重试。
+>
+> 设置 `APEX_ONLY_TEXT = True` 后，所有查询仅返回文字，不渲染卡片。
 
 插件通过 Alconna 的统一消息接口适配其支持的平台。图片无法导出或发送时，会自动回复完整查询文字；Console 等不支持图片的平台也可使用。各平台仍需安装、配置并连接对应适配器，图片收发效果需在实际平台验证。
 

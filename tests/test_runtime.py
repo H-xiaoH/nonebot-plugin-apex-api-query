@@ -18,3 +18,10 @@ class RuntimeTests(unittest.TestCase):
             env={**os.environ, 'APEX_TEST_DEFAULT_DB': '1'})
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('PASS name/UID binding', result.stdout)
+
+    def test_plugin_loads_without_api_key(self):
+        result = subprocess.run([sys.executable, '-c',
+            'from tests.bootstrap import p; assert not p.config.apex_api_key'],
+            cwd=Path(__file__).parents[1], capture_output=True, text=True, timeout=60,
+            env={**os.environ, 'APEX_TEST_API_KEY': ''})
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

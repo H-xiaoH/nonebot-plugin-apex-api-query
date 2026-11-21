@@ -13,7 +13,7 @@ ROOT = Path(_runtime.name)
 DEFAULT_DATABASE = bool(os.environ.get('APEX_TEST_DEFAULT_DB'))
 DATABASE = ROOT / 'data' / 'nonebot_plugin_orm' / 'db.sqlite3' if DEFAULT_DATABASE else ROOT / 'stats.sqlite3'
 nonebot.init(
-    driver='~none', apex_api_key='test-api-key', telegram_bots=[],
+    driver='~none', apex_api_key=os.environ.get('APEX_TEST_API_KEY', 'test-api-key'), telegram_bots=[],
     console_headless_mode=True, log_level='ERROR',
     localstore_data_dir=ROOT / 'data', localstore_cache_dir=ROOT / 'cache',
     localstore_config_dir=ROOT / 'config',
@@ -25,3 +25,5 @@ nonebot.get_driver().register_adapter(Adapter)
 plugin = nonebot.load_plugin('nonebot_plugin_apex_api_query')
 assert plugin is not None, 'The real plugin must load successfully'
 p = plugin.module
+# Startup tests stay offline; individual checks exercise the real request boundary.
+nonebot.get_driver()._lifespan._startup_funcs.remove(p.check_api_key)

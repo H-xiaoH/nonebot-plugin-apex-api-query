@@ -1,19 +1,18 @@
 import asyncio
 import unittest
 from unittest.mock import AsyncMock, patch
+from contextlib import nullcontext
 
 import httpx
-from pydantic import ValidationError
 
 from tests.bootstrap import p
 from nonebot_plugin_apex_api_query.config import Config
 
 
 class DataPipelineTests(unittest.IsolatedAsyncioTestCase):
-    def test_missing_and_blank_keys_are_rejected(self):
+    def test_missing_and_blank_keys_allow_loading(self):
         for values in ({}, {'apex_api_key': ''}, {'apex_api_key': '  '}):
-            with self.subTest(values=values), self.assertRaises(ValidationError):
-                Config(**values)
+            self.assertEqual(Config(**values).apex_api_key, '')
         self.assertEqual(Config(apex_api_key=' valid ').apex_api_key, 'valid')
 
     async def test_fetch_rejects_non_objects_and_invalid_json(self):
@@ -154,3 +153,50 @@ class DataPipelineTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn('CREATE TABLE', str(CreateTable(model.__table__).compile(dialect=dialect())))
             for index in model.__table__.indexes:
                 self.assertIn('CREATE INDEX', str(CreateIndex(index).compile(dialect=dialect())))
+
+    async def test_key_startup_missing_invalid_valid_and_temporary_errors(self):
+        for key, response, expected in (
+            ('', None, False),
+            ('test-key', httpx.Response(403, text='secret-canary'), False),
+            ('test-key', httpx.Response(200, json={'Origin_login': {}}), True),
+            ('test-key', httpx.Response(429, text='secret-canary'), None),
+            ('test-key', httpx.Response(500, text='secret-canary'), None),
+        ):
+            with self.subTest(status=response.status_code if response else 'missing'), \
+                    patch.object(p, '_api_key_available', None), \
+                    patch.object(p.config, 'apex_api_key', key), \
+                    patch.object(p, 'query_apex_api', AsyncMock(return_value=response)) as request:
+                with self.assertLogs(p.logger, level='WARNING') if expected is not True else nullcontext() as logs:
+                    await p.check_api_key()
+                self.assertIs(p._api_key_available, expected)
+                if not key:
+                    request.assert_not_awaited()
+                if logs:
+                    self.assertNotIn('secret-canary', '\n'.join(logs.output))
+
+    async def test_network_failure_does_not_mark_key_invalid(self):
+        with patch.object(p, '_api_key_available', None), patch.object(p, 'query_apex_api',
+                AsyncMock(side_effect=httpx.ConnectError('secret-canary'))):
+            with self.assertLogs(p.logger, level='WARNING') as logs:
+                await p.check_api_key()
+            self.assertIsNone(p._api_key_available)
+            self.assertNotIn('secret-canary', '\n'.join(logs.output))
+
+    async def test_auth_failure_has_safe_chat_error(self):
+        for status in (401, 403):
+            with patch.object(p, '_api_key_available', None), patch.object(p, 'query_apex_api',
+                    AsyncMock(return_value=httpx.Response(status, text='secret-canary'))):
+                with self.assertRaisesRegex(p.ApexAPIError, '^API密钥不可用$'):
+                    await p._fetch('bridge')
+                self.assertFalse(p._api_key_available)
+
+    async def test_key_is_sent_in_header_not_url(self):
+        original_client = httpx.AsyncClient
+        async def handle(request):
+            self.assertEqual(request.headers['Authorization'], 'test-api-key')
+            self.assertNotIn('auth', request.url.params)
+            return httpx.Response(200, json={})
+        def client(**kwargs):
+            return original_client(transport=httpx.MockTransport(handle), **kwargs)
+        with patch.object(p.httpx, 'AsyncClient', client):
+            await p.query_apex_api('servers')
